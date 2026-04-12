@@ -1,0 +1,41 @@
+<!-- karpaty-memory snippet — vault: obsidian-vault (default). If you set WIKI_VAULT_DIR,
+     replace every "obsidian-vault/" reference below with your vault directory name. -->
+
+## Wiki (Persistent Memory)
+
+**Vault:** `obsidian-vault/` (Obsidian vault in project root)
+**Schema:** `obsidian-vault/wiki-schema.md`
+**Compiler:** `karpaty-memory/scripts/compile.py`
+
+### Quick Reference
+- **Start of session:** read `obsidian-vault/index.md` + last 5 entries of `obsidian-vault/log.md`
+- **Manual ingest:** `uv run --directory karpaty-memory python scripts/compile.py`
+- **Auto-compile:** flush.py triggers compile.py after 18:00 if daily log changed or unprocessed raw files exist
+- **User says "ingest" / "обработай":** run compile.py or use the wiki-ingest skill
+- **User says "remember this" / "note this":** create or update the relevant wiki page immediately
+- **User says "lint the wiki":** `uv run --directory karpaty-memory python scripts/lint.py`
+
+### Source Types
+| Source | Nature | Lifecycle |
+|--------|--------|-----------|
+| `raw/` | Manual (devlog, articles, transcripts) | Immutable — never modified or deleted |
+| `daily/` | Auto-generated (session summaries from hooks) | Ephemeral — deleted after compilation |
+
+### Structure
+```
+obsidian-vault/
+├── index.md           ← READ FIRST. Single unified catalog of all wiki pages.
+├── log.md             ← Append-only activity log.
+├── wiki-schema.md     ← Full schema (ingest/query/lint rules).
+├── daily/             ← Ephemeral session logs (deleted after compile).
+├── raw/               ← Immutable source documents.
+│   └── assets/        ← Downloaded images.
+├── wiki/
+│   ├── architecture/  ← System design, data flows.
+│   ├── decisions/     ← Design decisions with rationale.
+│   ├── bugs/          ← Notable bugs, root causes, fixes.
+│   ├── features/      ← Feature design docs.
+│   ├── concepts/      ← Domain concepts, atomic knowledge.
+│   ├── operations/    ← Deployment, CI/CD.
+│   └── connections/   ← Cross-cutting insights.
+```
