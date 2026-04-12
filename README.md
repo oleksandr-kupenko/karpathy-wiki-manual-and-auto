@@ -4,7 +4,7 @@ Permanent memory for AI coding assistants (Claude Code, OpenCode). Based on [And
 
 ## How It Works
 
-![Flow Diagram](assets/flow-diagram.svg)
+![Flow Diagram](assets/schema-karpaty-wiki.webp)
 
 **Two source types:**
 
