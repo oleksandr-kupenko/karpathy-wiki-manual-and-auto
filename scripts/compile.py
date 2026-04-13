@@ -9,23 +9,27 @@ Usage:
     uv run python compile.py --source raw       # only raw/ sources
     uv run python compile.py --dry-run          # show what would be compiled
     uv run python compile.py --cleanup          # delete processed daily/ files
+    uv run python compile.py --provider <name>   # override provider (opencode/deepseek)
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import json
+import os
+import subprocess as sp
 import sys
 from pathlib import Path
 
 from config import (
-    AGENTS_FILE,
     DAILY_DIR,
     INDEX_FILE,
     LOG_FILE,
     RAW_DIR,
     WIKI_DIR,
     WIKI_SCHEMA_FILE,
+    VAULT_DIR,
     now_iso,
 )
 from utils import (
@@ -38,14 +42,40 @@ from utils import (
 )
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
+CONFIG_FILE = ROOT_DIR / "compile-config.json"
+ENV_FILE = ROOT_DIR / ".env"
 
 WIKI_FOLDER_DESCRIPTIONS = """\
 | Folder | When to use |
 |--------|-------------|
-| `wiki/concepts/` | Facts, patterns, how things work — bugs, features, architecture, domain knowledge, operations, anything concrete |
+| `wiki/concepts/` | Facts, patterns, how things work — bugs, features, architecture, domain knowledge, operations |
 | `wiki/decisions/` | Why X over Y — architectural choices, trade-offs, design rationale |
 | `wiki/connections/` | Non-obvious links between 2+ concepts across topics |
 """
+
+
+def load_env() -> None:
+    """Load environment variables from .env file."""
+    if ENV_FILE.exists():
+        for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key, value = key.strip(), value.strip()
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+
+def load_compile_provider() -> str:
+    """Load the LLM provider from config file."""
+    if CONFIG_FILE.exists():
+        try:
+            cfg = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+            return cfg.get("provider", "opencode")
+        except (json.JSONDecodeError, OSError):
+            pass
+    return "opencode"
 
 
 def source_type_label(path: Path) -> str:
@@ -56,16 +86,8 @@ def source_type_label(path: Path) -> str:
     return "unknown"
 
 
-async def compile_source(source_path: Path, state: dict) -> float:
-    """Compile a single source (daily log or raw document) into wiki pages."""
-    from claude_agent_sdk import (
-        AssistantMessage,
-        ClaudeAgentOptions,
-        ResultMessage,
-        TextBlock,
-        query,
-    )
-
+async def compile_source_opencode(source_path: Path, state: dict) -> float:
+    """Compile using opencode run command."""
     source_content = source_path.read_text(encoding="utf-8")
     schema = WIKI_SCHEMA_FILE.read_text(encoding="utf-8")
     wiki_index = read_wiki_index()
@@ -92,85 +114,77 @@ async def compile_source(source_path: Path, state: dict) -> float:
 
     timestamp = now_iso()
 
-    prompt = f"""You are a knowledge compiler. Your job is to read a source document and create/update structured wiki pages.
+    prompt = f"""Compile the source file below into wiki pages.
 
 ## Wiki Schema
-
 {schema}
 
 ## Wiki Folder Guide
-
 {WIKI_FOLDER_DESCRIPTIONS}
 
 ## Current Wiki Index
-
 {wiki_index}
 
 ## Existing Wiki Pages (truncated)
-
 {existing_context if existing_context else "(No existing wiki pages yet)"}
 
 ## Source to Compile
-
 **File:** {src_rel}
 **Type:** {src_type}
 
+```
 {source_content[:15000]}
+```
 
-## Your Task
-
+## Task
 Read the source above and compile it into wiki pages.
 
 ### Rules:
-
-1. **Classify** each piece of knowledge into the correct subfolder (see folder guide above).
-2. **Create wiki pages** — one .md file per topic (NOT per source file). A single source may create multiple pages; multiple sources may merge into one page.
-   - Each page MUST have YAML frontmatter: `title`, `tags`, `date`, `sources` (pointing to `{src_rel}`), `related` (using `[[wikilinks]]`)
-   - Body is concise markdown — **summary, not copy** of the source
-   - Target 30-80 lines per page
-   - Use `[[wikilinks]]` for cross-references (filename without extension, without folder prefix)
-3. **Update existing pages** if new sources add information to topics already covered.
-   - Read the existing page, merge new info, add source to frontmatter, add `lastmod` field
-4. **Create connection articles** in `wiki/connections/` if this source reveals non-obvious relationships between 2+ existing concepts
-5. **Update the index file** ({INDEX_FILE.name}) — add new pages to the correct table, update counts.
-6. **Append to the log file** ({LOG_FILE.name}) with format:
-   `## [{timestamp}] compile | {source_path.name}` followed by Sources/Created/Updated lists.
+1. Classify each piece of knowledge into the correct subfolder.
+2. Create wiki pages — one .md file per topic. Each page MUST have YAML frontmatter: `title`, `tags`, `date`, `sources`, `related` (using [[wikilinks]]).
+3. Update existing pages if new sources add information to topics already covered.
+4. Create connection articles in `wiki/connections/` if relationships revealed.
+5. Update `index.md` — add new pages to the correct table, update counts.
+6. Append to `log.md`.
 
 ### File paths:
 - Write wiki pages to subfolders of: {WIKI_DIR}
 - Update index at: {INDEX_FILE}
 - Append log at: {LOG_FILE}
 
-### Quality standards:
-- Every page must have complete YAML frontmatter
-- Every page must have at least 2 `[[wikilinks]]` in `related` field
-- Keep pages concise — wiki pages are summaries, not copies
-- Write in English unless the source is explicitly in another language
-"""
+Run the wiki ingest now. Respond with DONE when complete."""
 
-    cost = 0.0
+    opencode_cmd = os.environ.get("OPENCODE_BIN", "/home/san/.opencode/bin/opencode")
+    vault_dir = str(VAULT_DIR)
+    instructions_file = VAULT_DIR / "COMPILE_INSTRUCTIONS.md"
+    instructions = instructions_file.read_text() if instructions_file.exists() else ""
+
+    full_prompt = f"""{prompt}
+
+## Instructions
+{instructions}
+
+Now execute."""
+
+    proc = sp.Popen(
+        [opencode_cmd, "run", full_prompt, "--dir", vault_dir, "--title", f"compile: {source_path.name}", "--dangerously-skip-permissions", "--print-logs"],
+        stdout=sp.PIPE,
+        stderr=sp.PIPE,
+        text=True,
+    )
 
     try:
-        async for message in query(
-            prompt=prompt,
-            options=ClaudeAgentOptions(
-                cwd=str(ROOT_DIR.parent),
-                system_prompt={"type": "preset", "preset": "claude_code"},
-                allowed_tools=["Read", "Write", "Edit", "Glob", "Grep"],
-                permission_mode="acceptEdits",
-                max_turns=30,
-            ),
-        ):
-            if isinstance(message, AssistantMessage):
-                for block in message.content:
-                    if isinstance(block, TextBlock):
-                        pass
-            elif isinstance(message, ResultMessage):
-                cost = message.total_cost_usd or 0.0
-                print(f"  Cost: ${cost:.4f}")
-    except Exception as e:
-        print(f"  Error: {e}")
+        stdout, stderr = proc.communicate(timeout=180)
+        if proc.returncode != 0:
+            print(f"  Error: {stderr}")
+            return 0.0
+        print(f"  Output: {stdout[:500]}")
+    except sp.TimeoutExpired:
+        proc.kill()
+        print("  Timeout")
         return 0.0
+
+    cost = 0.0
 
     rel_path = source_path.name if src_type == "daily" else str(source_path.relative_to(RAW_DIR))
     state_key = f"{src_type}/{rel_path}"
@@ -184,6 +198,101 @@ Read the source above and compile it into wiki pages.
     save_state(state)
 
     return cost
+
+
+async def compile_source_deepseek(source_path: Path, state: dict) -> float:
+    """Compile using DeepSeek API."""
+    from openai import OpenAI
+
+    source_content = source_path.read_text(encoding="utf-8")
+    schema = WIKI_SCHEMA_FILE.read_text(encoding="utf-8")
+    wiki_index = read_wiki_index()
+
+    src_type = source_type_label(source_path)
+    if src_type == "daily":
+        src_rel = f"daily/{source_path.name}"
+    else:
+        src_rel = f"raw/{source_path.relative_to(RAW_DIR)}"
+
+    prompt = f"""You are a knowledge compiler. Create wiki pages from the source below.
+
+## Wiki Schema
+{schema}
+
+## Wiki Folder Guide
+{WIKI_FOLDER_DESCRIPTIONS}
+
+## Current Wiki Index
+{wiki_index}
+
+## Source to Compile
+**File:** {src_rel}
+**Type:** {src_type}
+
+{source_content[:12000]}
+
+## Task
+Create wiki pages. Output format per page:
+```
+---
+title: Page Title
+tags: [tag1, tag2]
+date: YYYY-MM-DD
+sources:
+  - {src_rel}
+related:
+  - [[other-page]]
+---
+Page content here.
+```
+
+Write to {WIKI_DIR} subfolders. Update {INDEX_FILE} and {LOG_FILE}."""
+
+    load_env()
+    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+    if not api_key:
+        print("  Error: DEEPSEEK_API_KEY not set")
+        return 0.0
+
+    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+
+    try:
+        resp = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=8000,
+        )
+        content = resp.choices[0].message.content or ""
+    except Exception as e:
+        print(f"  Error: {e}")
+        return 0.0
+
+    cost = 0.0
+
+    rel_path = source_path.name if src_type == "daily" else str(source_path.relative_to(RAW_DIR))
+    state_key = f"{src_type}/{rel_path}"
+    state.setdefault("ingested", {})[state_key] = {
+        "hash": file_hash(source_path),
+        "type": src_type,
+        "compiled_at": now_iso(),
+        "cost_usd": cost,
+    }
+    state["total_cost"] = state.get("total_cost", 0.0) + cost
+    save_state(state)
+
+    return cost
+
+
+async def compile_source(source_path: Path, state: dict, provider: str) -> float:
+    """Compile a single source using the specified provider."""
+    if provider == "opencode":
+        return await compile_source_opencode(source_path, state)
+    elif provider == "deepseek":
+        return await compile_source_deepseek(source_path, state)
+    else:
+        print(f"  Unknown provider: {provider}")
+        return 0.0
 
 
 def cleanup_processed_daily(state: dict) -> None:
@@ -206,11 +315,23 @@ def main():
     parser = argparse.ArgumentParser(description="Compile sources into wiki pages")
     parser.add_argument("--all", action="store_true", help="Force recompile all sources")
     parser.add_argument("--file", type=str, help="Compile a specific file")
-    parser.add_argument("--source", choices=["daily", "raw", "all"], default="all", help="Source type to process")
+    parser.add_argument(
+        "--source",
+        choices=["daily", "raw", "all"],
+        default="all",
+        help="Source type to process",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Show what would be compiled")
     parser.add_argument("--cleanup", action="store_true", help="Delete processed daily/ files and exit")
+    parser.add_argument(
+        "--provider",
+        choices=["opencode", "deepseek"],
+        help="Override provider (default: from compile-config.json)",
+    )
     args = parser.parse_args()
 
+    load_env()
+    provider = args.provider or load_compile_provider()
     state = load_state()
 
     if args.cleanup:
@@ -220,7 +341,7 @@ def main():
     if args.file:
         target = Path(args.file)
         if not target.is_absolute():
-            for base in [DAILY_DIR, RAW_DIR, ROOT_DIR.parent]:
+            for base in [DAILY_DIR, RAW_DIR, VAULT_DIR]:
                 candidate = base / args.file
                 if candidate.exists():
                     target = candidate
@@ -252,15 +373,32 @@ def main():
 
     print(f"{'[DRY RUN] ' if args.dry_run else ''}Sources to compile ({len(to_compile)}):")
     for f in to_compile:
-        print(f"  - {source_type_label(f)}/{f.name if f.is_relative_to(DAILY_DIR) or f.is_relative_to(RAW_DIR) else f}")
+        print(
+            f"  - {source_type_label(f)}/{f.name if f.is_relative_to(DAILY_DIR) or f.is_relative_to(RAW_DIR) else f}"
+        )
 
     if args.dry_run:
         return
 
+    if provider == "opencode":
+        print("\n=== AUTO RUN via opencode ===")
+        print(f"Running compile via opencode...")
+        total_cost = 0.0
+        for i, src_path in enumerate(to_compile, 1):
+            print(f"\n[{i}/{len(to_compile)}] Compiling {src_path.name}...")
+            cost = asyncio.run(compile_source(src_path, state, provider))
+            total_cost += cost
+            print(f"  Done.")
+        pages = list_wiki_pages()
+        print(f"\nCompilation complete.")
+        print(f"Wiki: {len(pages)} pages")
+        cleanup_processed_daily(state)
+        return
+
     total_cost = 0.0
     for i, src_path in enumerate(to_compile, 1):
-        print(f"\n[{i}/{len(to_compile)}] Compiling {src_path.name}...")
-        cost = asyncio.run(compile_source(src_path, state))
+        print(f"\n[{i}/{len(to_compile)}] Compiling {src_path.name} (provider: {provider})...")
+        cost = asyncio.run(compile_source(src_path, state, provider))
         total_cost += cost
         print(f"  Done.")
 

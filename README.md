@@ -15,7 +15,7 @@ Permanent memory for AI coding assistants (Claude Code, OpenCode). Based on [And
 
 **Models:**
 - `flush.py` — DeepSeek (if API key set) **or** Claude Agent SDK (automatic fallback)
-- `compile.py` — Claude Agent SDK (uses Claude Code subscription, not configurable)
+- `compile.py` — **OpenCode** (free, recommended) **or** DeepSeek API **or** Claude Agent SDK
 
 ## Quick Start
 
@@ -92,12 +92,37 @@ Point an Obsidian vault at your `obsidian-vault/` directory for graph view, back
 
 ## Configuration (optional)
 
-No API keys required — works out of the box with Claude Code subscription.
+No API keys required — works out of the box with OpenCode (free).
 
 ```bash
 cp karpathy-wiki-manual-and-auto/.env.example karpathy-wiki-manual-and-auto/.env
 cp karpathy-wiki-manual-and-auto/flush-config.json.example karpathy-wiki-manual-and-auto/flush-config.json
 ```
+
+### Compile Provider
+
+`compile.py` supports three providers, configured in `compile-config.json`:
+
+| Provider | Cost | What it uses |
+|----------|------|-------------|
+| `opencode` | **$0** | Runs OpenCode with COMPILE_INSTRUCTIONS.md (recommended) |
+| `deepseek` | ~$0.01 | DeepSeek API via OpenAI SDK (requires key) |
+| `claude` | ~$2+ | Claude Agent SDK (expensive, rate limits) |
+
+**Default:** `opencode` (free)
+
+```bash
+# Create compile-config.json
+echo '{"provider": "opencode"}' > karpathy-wiki-manual-and-auto/compile-config.json
+
+# Or use DeepSeek
+echo '{"provider": "deepseek"}' > karpathy-wiki-manual-and-auto/compile-config.json
+
+# Or Claude (not recommended — expensive)
+echo '{"provider": "claude"}' > karpathy-wiki-manual-and-auto/compile-config.json
+```
+
+### Flush Provider
 
 To use DeepSeek for cheaper session summarization, add your key to `.env`:
 ```
@@ -187,10 +212,11 @@ karpathy-wiki-manual-and-auto/                  # This repo — add to any proje
 
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) package manager
-- Claude Code subscription (for compile.py and flush.py fallback — uses built-in credentials)
+- [OpenCode](https://opencode.ai) installed (for compile.py with `opencode` provider)
 
 Optional:
-- DeepSeek API key (for cheaper session summarization via `flush.py`)
+- DeepSeek API key (for `deepseek` provider in flush.py or compile.py)
+- Claude Code subscription (only for `claude` provider fallback)
 - [Obsidian](https://obsidian.md) for browsing the wiki
 
 ## Flush Provider Logic
@@ -202,6 +228,35 @@ Optional:
 3. If `flush-config.json` sets `"flush_provider": "auto"` (default) or is missing:
    - If `DEEPSEEK_API_KEY` is set → uses DeepSeek API
    - Otherwise → falls back to Claude Agent SDK (uses Claude Code subscription)
+
+## Compile Provider (OpenCode)
+
+**Recommended:** Use `opencode` provider (free, no rate limits):
+
+```bash
+echo '{"provider": "opencode"}' > compile-config.json
+```
+
+Then run compile:
+```bash
+uv run python scripts/compile.py
+```
+
+The compile will:
+1. Read `COMPILE_INSTRUCTIONS.md` from the vault
+2. Process `daily/` or `raw/` files
+3. Create wiki pages in `wiki/` subfolders
+4. Update `index.md` and `log.md`
+
+Make sure OpenCode is installed:
+```bash
+# Install OpenCode
+curl -s https://opencode.ai/install | sh
+# or
+npm install -g opencode
+```
+
+> Note: When using `opencode` provider, `compile.py` runs OpenCode in background with `--dangerously-skip-permissions` flag to auto-approve file operations.
 
 ## Credits
 
