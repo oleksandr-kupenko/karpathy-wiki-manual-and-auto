@@ -1,18 +1,23 @@
 """
-SessionStart hook - injects knowledge base context into every conversation.
+sessionStart hook for Cursor AI - injects knowledge base context into every conversation.
 
-This is the "context injection" layer. When Claude Code starts a session,
-this hook reads the knowledge base index and recent daily log, then injects
-them as additional context so Claude always "remembers" what it has learned.
+Cursor calls this at session start, passing hook payload via stdin (JSON).
+This script reads the wiki index + recent daily log and returns them as
+additional_context, which Cursor injects into the model's system prompt.
 
-Configure in .claude/settings.json:
+Configure in .cursor/hooks.json:
 {
+    "version": 1,
     "hooks": {
-        "SessionStart": [{
-            "matcher": "",
-            "command": "uv run --directory karpathy-wiki python hooks/session-start.py"
+        "sessionStart": [{
+            "command": "uv run --directory karpathy-wiki python hooks/cursor/session-start.py"
         }]
     }
+}
+
+Output format (stdout):
+{
+    "additional_context": "<string injected into system prompt>"
 }
 """
 
@@ -21,7 +26,8 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+# hooks/cursor/session-start.py → hooks/cursor/ → hooks/ → karpathy-wiki/
+ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPTS_DIR = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 from config import DAILY_DIR, INDEX_FILE
@@ -70,16 +76,16 @@ def build_context() -> str:
 
 
 def main():
+    # Read stdin (Cursor passes hook payload as JSON — we don't need any fields from it)
+    try:
+        sys.stdin.read()
+    except Exception:
+        pass
+
     context = build_context()
 
-    output = {
-        "hookSpecificOutput": {
-            "hookEventName": "SessionStart",
-            "additionalContext": context,
-        }
-    }
-
-    print(json.dumps(output))
+    # Cursor sessionStart output format
+    print(json.dumps({"additional_context": context}))
 
 
 if __name__ == "__main__":

@@ -60,6 +60,25 @@ cd .opencode && npm install && cd ..
 cp karpathy-wiki/templates/opencode.json ./
 ```
 
+#### Cursor AI
+
+Requires **Cursor 1.7+** (hooks support).
+
+```bash
+# Copy hooks config into your project (create .cursor/ if it doesn't exist)
+mkdir -p .cursor
+cp karpathy-wiki/templates/cursor-hooks.json .cursor/hooks.json
+```
+
+> If `.cursor/hooks.json` already exists, merge the `"hooks"` key manually.
+
+The hooks wired:
+| Hook | When | What it does |
+|------|------|-------------|
+| `sessionStart` | Session starts | Reads `index.md` + recent daily log → injects into system context |
+| `sessionEnd` | Session ends | Extracts transcript → spawns `flush.py` → daily log |
+| `preCompact` | Before context compaction | Same as sessionEnd (saves context before it's lost) |
+
 ### 4. Add wiki instructions to CLAUDE.md
 
 Append the content of `templates/CLAUDE.md.snippet` to your project's `CLAUDE.md`.
@@ -142,15 +161,20 @@ karpathy-wiki/                  # This repo — add to any project as a submodul
 │   ├── lint.py                  # Health checks; saves reports to reports/ (auto-created)
 │   ├── config.py                # Path constants (configurable via env vars)
 │   └── utils.py                 # Shared helpers
-├── hooks/                       # Claude Code hook scripts (Python)
-│   ├── session-start.py         # Inject wiki index into session context
-│   ├── session-end.py           # Extract conversation → spawn flush.py
-│   └── pre-compact.py           # Save context before auto-compaction
+├── hooks/                       # Hook scripts (Python) for all AI assistants
+│   ├── session-start.py         # Claude Code: inject wiki index into session context
+│   ├── session-end.py           # Claude Code: extract conversation → spawn flush.py
+│   ├── pre-compact.py           # Claude Code: save context before auto-compaction
+│   └── cursor/
+│       ├── session-start.py     # Cursor AI: inject wiki index (sessionStart hook)
+│       ├── session-end.py       # Cursor AI: extract conversation (sessionEnd hook)
+│       └── pre-compact.py       # Cursor AI: save context before compaction
 ├── templates/                   # Copy these into your project once at setup
 │   ├── vault/                   # Empty Obsidian vault skeleton
 │   ├── .claude/                 # settings.json (hook wiring) + wiki-ingest skill
 │   ├── .opencode/               # OpenCode memory plugin
 │   ├── opencode.json            # OpenCode config
+│   ├── cursor-hooks.json        # Cursor AI hooks config → copy to .cursor/hooks.json
 │   └── CLAUDE.md.snippet        # Append to your project's CLAUDE.md
 ├── AGENTS.md                    # LLM agent schema: wiki structure, compile rules, conventions
 ├── pyproject.toml               # Python dependencies (uv)

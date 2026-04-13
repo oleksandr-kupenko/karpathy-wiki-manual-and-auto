@@ -146,6 +146,7 @@ def main() -> None:
         str(flush_script),
         str(context_file),
         session_id,
+        "claude",
     ]
 
     creation_flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0

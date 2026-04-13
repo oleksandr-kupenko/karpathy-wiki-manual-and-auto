@@ -1,0 +1,24 @@
+{
+  "$schema": "https://cursor.sh/schemas/hooks.json",
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "uv run --directory karpathy-wiki python hooks/cursor/session-start.py",
+        "timeout": 15
+      }
+    ],
+    "preCompact": [
+      {
+        "command": "uv run --directory karpathy-wiki python hooks/cursor/pre-compact.py",
+        "timeout": 10
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "uv run --directory karpathy-wiki python hooks/cursor/session-end.py",
+        "timeout": 10
+      }
+    ]
+  }
+}

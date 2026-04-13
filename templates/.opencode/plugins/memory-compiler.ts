@@ -21,12 +21,22 @@ export default (async ({ client, directory }) => {
   }
 
   function readRecentLog(): string {
+    const { readdirSync } = require("node:fs") as typeof import("node:fs")
     for (let i = 0; i < 2; i++) {
       const d = new Date()
       d.setDate(d.getDate() - i)
-      const f = join(dailyDir, `${d.toISOString().split("T")[0]}.md`)
-      if (existsSync(f)) {
-        return read(f).split("\n").slice(-MAX_LOG_LINES).join("\n")
+      const dateStr = d.toISOString().split("T")[0]
+      // Collect all daily files for this date: YYYY-MM-DD.md, YYYY-MM-DD_claude.md, etc.
+      let files: string[] = []
+      try {
+        files = readdirSync(dailyDir)
+          .filter((f: string) => f.startsWith(dateStr) && f.endsWith(".md"))
+          .sort()
+          .map((f: string) => join(dailyDir, f))
+      } catch {}
+      if (files.length > 0) {
+        const allLines = files.flatMap((f: string) => read(f).split("\n"))
+        return allLines.slice(-MAX_LOG_LINES).join("\n")
       }
     }
     return "(no recent daily log)"
@@ -48,7 +58,7 @@ export default (async ({ client, directory }) => {
     if (!existsSync(flushScript)) return
     spawn(
       "uv",
-      ["run", "--directory", compilerDir, "python", flushScript, contextFile, sessionId],
+      ["run", "--directory", compilerDir, "python", flushScript, contextFile, sessionId, "opencode"],
       { detached: true, stdio: "ignore" }
     ).unref()
   }

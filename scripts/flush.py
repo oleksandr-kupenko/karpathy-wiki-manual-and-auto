@@ -11,7 +11,11 @@ Provider logic:
   3. Else → Claude Agent SDK (fallback, uses Anthropic subscription)
 
 Usage:
-    uv run python flush.py <context_file.md> <session_id>
+    uv run python flush.py <context_file.md> <session_id> [agent]
+
+agent: optional identifier for the source AI tool, e.g. "claude", "cursor_ai",
+       "opencode". When provided, the daily log is written to
+       YYYY-MM-DD_<agent>.md instead of YYYY-MM-DD.md.
 """
 
 from __future__ import annotations
@@ -90,14 +94,17 @@ def save_flush_state(state: dict) -> None:
     STATE_FILE.write_text(json.dumps(state), encoding="utf-8")
 
 
-def append_to_daily_log(content: str, section: str = "Session") -> None:
+def append_to_daily_log(content: str, section: str = "Session", agent: str | None = None) -> None:
     today = datetime.now(timezone.utc).astimezone()
-    log_path = DAILY_DIR / f"{today.strftime('%Y-%m-%d')}.md"
+    date_str = today.strftime("%Y-%m-%d")
+    filename = f"{date_str}_{agent}.md" if agent else f"{date_str}.md"
+    log_path = DAILY_DIR / filename
 
     if not log_path.exists():
         DAILY_DIR.mkdir(parents=True, exist_ok=True)
+        agent_label = f" [{agent}]" if agent else ""
         log_path.write_text(
-            f"# Daily Log: {today.strftime('%Y-%m-%d')}\n\n## Sessions\n\n## Memory Maintenance\n\n",
+            f"# Daily Log: {date_str}{agent_label}\n\n## Sessions\n\n## Memory Maintenance\n\n",
             encoding="utf-8",
         )
 
@@ -218,19 +225,25 @@ def maybe_trigger_compilation() -> None:
     if now.hour < COMPILE_AFTER_HOUR:
         return
 
-    today_log = f"{now.strftime('%Y-%m-%d')}.md"
+    date_str = now.strftime("%Y-%m-%d")
+    # All daily files for today: YYYY-MM-DD.md, YYYY-MM-DD_claude.md, etc.
+    today_logs = list(DAILY_DIR.glob(f"{date_str}*.md")) if DAILY_DIR.exists() else []
+
     compile_state_file = SCRIPTS_DIR / "state.json"
-    if compile_state_file.exists():
+    if compile_state_file.exists() and today_logs:
         try:
+            from hashlib import sha256
             compile_state = json.loads(compile_state_file.read_text(encoding="utf-8"))
             ingested = compile_state.get("ingested", {})
-            if today_log in ingested:
-                from hashlib import sha256
-                log_path = DAILY_DIR / today_log
-                if log_path.exists():
-                    current_hash = sha256(log_path.read_bytes()).hexdigest()[:16]
-                    if ingested[today_log].get("hash") == current_hash:
-                        return
+            # If ALL today's logs are already ingested with unchanged hashes → skip
+            all_ingested = all(
+                log_path.name in ingested
+                and ingested[log_path.name].get("hash")
+                == sha256(log_path.read_bytes()).hexdigest()[:16]
+                for log_path in today_logs
+            )
+            if all_ingested:
+                return
         except (json.JSONDecodeError, OSError):
             pass
 
@@ -257,13 +270,14 @@ def maybe_trigger_compilation() -> None:
 
 def main():
     if len(sys.argv) < 3:
-        logging.error("Usage: %s <context_file.md> <session_id>", sys.argv[0])
+        logging.error("Usage: %s <context_file.md> <session_id> [agent]", sys.argv[0])
         sys.exit(1)
 
     context_file = Path(sys.argv[1])
     session_id = sys.argv[2]
+    agent = sys.argv[3] if len(sys.argv) > 3 else None
 
-    logging.info("flush.py started for session %s, context: %s", session_id, context_file)
+    logging.info("flush.py started for session %s, agent=%s, context: %s", session_id, agent, context_file)
 
     if not context_file.exists():
         logging.error("Context file not found: %s", context_file)
@@ -291,14 +305,14 @@ def main():
     if "FLUSH_OK" in response:
         logging.info("Result: FLUSH_OK")
         append_to_daily_log(
-            "FLUSH_OK - Nothing worth saving from this session", "Memory Flush"
+            "FLUSH_OK - Nothing worth saving from this session", "Memory Flush", agent
         )
     elif "FLUSH_ERROR" in response:
         logging.error("Result: %s", response)
-        append_to_daily_log(response, "Memory Flush")
+        append_to_daily_log(response, "Memory Flush", agent)
     else:
         logging.info("Result: saved to daily log (%d chars)", len(response))
-        append_to_daily_log(response, "Session")
+        append_to_daily_log(response, "Session", agent)
 
     save_flush_state({"session_id": session_id, "timestamp": time.time()})
 
