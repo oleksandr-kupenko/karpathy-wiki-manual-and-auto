@@ -42,13 +42,9 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 WIKI_FOLDER_DESCRIPTIONS = """\
 | Folder | When to use |
 |--------|-------------|
-| `wiki/architecture/` | System design, data flows, component relationships, project structure |
-| `wiki/decisions/` | Architectural/design decisions with rationale ("why X over Y") |
-| `wiki/bugs/` | Notable bugs, root causes, fixes |
-| `wiki/features/` | Feature design docs, implementation notes, component/service docs |
-| `wiki/concepts/` | Domain concepts, glossary, patterns, atomic knowledge |
-| `wiki/operations/` | Deployment, infrastructure, CI/CD, tooling |
-| `wiki/connections/` | Cross-cutting insights linking 2+ concepts across folders |
+| `wiki/concepts/` | Facts, patterns, how things work — bugs, features, architecture, domain knowledge, operations, anything concrete |
+| `wiki/decisions/` | Why X over Y — architectural choices, trade-offs, design rationale |
+| `wiki/connections/` | Non-obvious links between 2+ concepts across topics |
 """
 
 

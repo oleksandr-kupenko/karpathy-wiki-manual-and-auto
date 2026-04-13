@@ -31,13 +31,9 @@ LLM-owned, human-readable. One index, one log.
 
 ```
 wiki/
-├── architecture/    System design, data flows, component relationships
-├── decisions/       Design decisions with rationale
-├── bugs/            Notable bugs, root causes, fixes
-├── features/        Feature design docs, implementation notes
-├── concepts/        Domain concepts, glossary, patterns, atomic knowledge
-├── operations/      Deployment, infrastructure, CI/CD
-└── connections/     Cross-cutting insights linking 2+ concepts
+├── concepts/        Facts, patterns, how things work (bugs, features, architecture, domain, ops — all here)
+├── decisions/       Why X over Y — design rationale, trade-offs
+└── connections/     Non-obvious links between 2+ concepts across topics
 ```
 
 ### Structural Files

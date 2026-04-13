@@ -81,13 +81,9 @@ related:
 
 | Folder | Purpose | Example pages |
 |--------|---------|---------------|
-| `wiki/architecture/` | System design, data flows, component relationships | `server-architecture.md` |
-| `wiki/decisions/` | Architectural and design decisions with rationale | `why-markdown-wiki-not-rag.md` |
-| `wiki/bugs/` | Notable bugs, root causes, fixes | `visual-highlights-fix.md` |
-| `wiki/features/` | Feature design docs, implementation notes | `auth-server.md` |
-| `wiki/concepts/` | Domain concepts, glossary entries, atomic knowledge | `quality-tiers.md` |
-| `wiki/operations/` | Deployment, infrastructure, CI/CD notes | `deployment.md` |
-| `wiki/connections/` | Cross-cutting insights linking 2+ concepts | `auth-and-api-design.md` |
+| `wiki/concepts/` | Facts, patterns, how things work — bugs, features, architecture, domain knowledge, ops, anything concrete | `auth-server.md`, `ytdlp-proxy-chain.md`, `deployment.md` |
+| `wiki/decisions/` | Why X over Y — architectural choices, trade-offs, design rationale | `why-markdown-wiki-not-rag.md` |
+| `wiki/connections/` | Non-obvious links between 2+ concepts across topics | `auth-and-api-design.md` |
 
 ## Token Economy
 

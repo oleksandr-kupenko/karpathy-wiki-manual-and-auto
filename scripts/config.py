@@ -32,12 +32,8 @@ LOG_FILE = VAULT_DIR / "log.md"
 STATE_FILE = SCRIPTS_DIR / "state.json"
 
 WIKI_SUBDIRS = [
-    "architecture",
-    "decisions",
-    "bugs",
-    "features",
     "concepts",
-    "operations",
+    "decisions",
     "connections",
 ]
 
