@@ -32,7 +32,7 @@ One compiler (`compile.py`) handles both source types. Automatic compilation tri
 - **Index:** `obsidian-vault/index.md` (single unified index)
 - **Log:** `obsidian-vault/log.md` (single unified log)
 - **Schema:** `obsidian-vault/wiki-schema.md`
-- **Compiler:** `karpathy-wiki/scripts/compile.py`
+- **Compiler:** `andrej-karpathy-llm-memory/scripts/compile.py`
 
 ## When to Trigger
 
@@ -46,11 +46,11 @@ One compiler (`compile.py`) handles both source types. Automatic compilation tri
 ### 1. Run the compiler
 
 ```bash
-uv run --directory karpathy-wiki python scripts/compile.py              # all unprocessed
-uv run --directory karpathy-wiki python scripts/compile.py --source raw  # only raw/
-uv run --directory karpathy-wiki python scripts/compile.py --source daily # only daily/
-uv run --directory karpathy-wiki python scripts/compile.py --file <path> # specific file
-uv run --directory karpathy-wiki python scripts/compile.py --dry-run     # preview
+uv run --directory andrej-karpathy-llm-memory python scripts/compile.py              # all unprocessed
+uv run --directory andrej-karpathy-llm-memory python scripts/compile.py --source raw  # only raw/
+uv run --directory andrej-karpathy-llm-memory python scripts/compile.py --source daily # only daily/
+uv run --directory andrej-karpathy-llm-memory python scripts/compile.py --file <path> # specific file
+uv run --directory andrej-karpathy-llm-memory python scripts/compile.py --dry-run     # preview
 ```
 
 The compiler uses Claude Agent SDK to read sources and create/update wiki pages directly.
@@ -81,8 +81,8 @@ When user says "remember this" / "note this" without a source:
 ## Step-by-Step: Lint Wiki
 
 ```bash
-uv run --directory karpathy-wiki python scripts/lint.py              # all checks
-uv run --directory karpathy-wiki python scripts/lint.py --structural-only # free, no LLM
+uv run --directory andrej-karpathy-llm-memory python scripts/lint.py              # all checks
+uv run --directory andrej-karpathy-llm-memory python scripts/lint.py --structural-only # free, no LLM
 ```
 
 ## Wiki Page Folders

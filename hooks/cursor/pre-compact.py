@@ -12,7 +12,7 @@ Configure in .cursor/hooks.json:
     "version": 1,
     "hooks": {
         "preCompact": [{
-            "command": "uv run --directory karpathy-wiki python hooks/cursor/pre-compact.py",
+            "command": "uv run --directory andrej-karpathy-llm-memory python hooks/cursor/pre-compact.py",
             "timeout": 10
         }]
     }
@@ -47,7 +47,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-# hooks/cursor/pre-compact.py → hooks/cursor/ → hooks/ → karpathy-wiki/
+# hooks/cursor/pre-compact.py → hooks/cursor/ → hooks/ → andrej-karpathy-llm-memory/
 ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPTS_DIR = ROOT / "scripts"
 STATE_DIR = SCRIPTS_DIR

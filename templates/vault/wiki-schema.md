@@ -9,7 +9,7 @@ This document defines how the LLM agent operates on the project wiki.
 
 ## Wiki Location
 
-- **Vault root:** `obsidian-vault/` (default name; set `WIKI_VAULT_DIR` env var in `karpathy-wiki/.env` to change)
+- **Vault root:** `obsidian-vault/` (default name; set `WIKI_VAULT_DIR` env var in `andrej-karpathy-llm-memory/.env` to change)
 - **Raw sources:** `obsidian-vault/raw/` — immutable source documents (articles, devlog, transcripts)
 - **Daily logs:** `obsidian-vault/daily/` — ephemeral auto-generated session logs (deleted after compilation)
 - **Wiki pages:** `obsidian-vault/wiki/` — LLM-generated, structured knowledge
@@ -27,13 +27,13 @@ This document defines how the LLM agent operates on the project wiki.
 
 ### Compile (the unified compiler)
 
-A single compiler (`karpathy-wiki/scripts/compile.py`) processes both `raw/` and `daily/` sources into `wiki/` pages.
+A single compiler (`andrej-karpathy-llm-memory/scripts/compile.py`) processes both `raw/` and `daily/` sources into `wiki/` pages.
 
 **Auto-trigger:** After 18:00, `flush.py` spawns `compile.py` if today's daily log has changed or there are unprocessed `raw/` files.
 
 **Manual trigger:** User says "ingest", "обработай", "переведи в wiki", or runs:
 ```bash
-uv run --directory karpathy-wiki python scripts/compile.py
+uv run --directory andrej-karpathy-llm-memory python scripts/compile.py
 ```
 
 **Process:**
@@ -56,7 +56,7 @@ When the user asks a question about the project:
 
 When asked to "lint the wiki" or "health check":
 ```bash
-uv run --directory karpathy-wiki python scripts/lint.py
+uv run --directory andrej-karpathy-llm-memory python scripts/lint.py
 ```
 Checks: broken links, orphans, unprocessed sources, stale pages, missing backlinks, sparse pages, contradictions.
 

@@ -4,19 +4,19 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": "uv run --directory karpathy-wiki python hooks/cursor/session-start.py",
+        "command": "uv run --directory andrej-karpathy-llm-memory python hooks/cursor/session-start.py",
         "timeout": 15
       }
     ],
     "preCompact": [
       {
-        "command": "uv run --directory karpathy-wiki python hooks/cursor/pre-compact.py",
+        "command": "uv run --directory andrej-karpathy-llm-memory python hooks/cursor/pre-compact.py",
         "timeout": 10
       }
     ],
     "sessionEnd": [
       {
-        "command": "uv run --directory karpathy-wiki python hooks/cursor/session-end.py",
+        "command": "uv run --directory andrej-karpathy-llm-memory python hooks/cursor/session-end.py",
         "timeout": 10
       }
     ]

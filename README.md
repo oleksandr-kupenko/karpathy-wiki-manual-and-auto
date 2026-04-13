@@ -24,17 +24,17 @@ Permanent memory for AI coding assistants (Claude Code, OpenCode). Based on [And
 ```bash
 # Clone as submodule (recommended) or copy
 cd /your/project
-git submodule add https://github.com/<your-username>/karpathy-wiki.git karpathy-wiki
+git submodule add https://github.com/<your-username>/andrej-karpathy-llm-memory.git andrej-karpathy-llm-memory
 
 # Install Python dependencies
-cd karpathy-wiki && uv sync && cd ..
+cd andrej-karpathy-llm-memory && uv sync && cd ..
 ```
 
 ### 2. Create the vault
 
 ```bash
 # Copy template vault (rename as you like)
-cp -r karpathy-wiki/templates/vault/ ./obsidian-vault
+cp -r andrej-karpathy-llm-memory/templates/vault/ ./obsidian-vault
 ```
 
 ### 3. Connect hooks
@@ -43,7 +43,7 @@ cp -r karpathy-wiki/templates/vault/ ./obsidian-vault
 
 ```bash
 # Copy hook config
-cp -r karpathy-wiki/templates/.claude/ .claude/
+cp -r andrej-karpathy-llm-memory/templates/.claude/ .claude/
 ```
 
 > If `.claude/settings.json` already exists in your project, merge the `"hooks"` key
@@ -53,11 +53,11 @@ cp -r karpathy-wiki/templates/.claude/ .claude/
 
 ```bash
 # Copy plugin
-cp -r karpathy-wiki/templates/.opencode/ .opencode/
+cp -r andrej-karpathy-llm-memory/templates/.opencode/ .opencode/
 cd .opencode && npm install && cd ..
 
 # Copy config (if opencode.json already exists, add "memory-compiler" to its "plugin" array)
-cp karpathy-wiki/templates/opencode.json ./
+cp andrej-karpathy-llm-memory/templates/opencode.json ./
 ```
 
 #### Cursor AI
@@ -67,7 +67,7 @@ Requires **Cursor 1.7+** (hooks support).
 ```bash
 # Copy hooks config into your project (create .cursor/ if it doesn't exist)
 mkdir -p .cursor
-cp karpathy-wiki/templates/cursor-hooks.json .cursor/hooks.json
+cp andrej-karpathy-llm-memory/templates/cursor-hooks.json .cursor/hooks.json
 ```
 
 > If `.cursor/hooks.json` already exists, merge the `"hooks"` key manually.
@@ -95,8 +95,8 @@ Point an Obsidian vault at your `obsidian-vault/` directory for graph view, back
 No API keys required — works out of the box with Claude Code subscription.
 
 ```bash
-cp karpathy-wiki/.env.example karpathy-wiki/.env
-cp karpathy-wiki/flush-config.json.example karpathy-wiki/flush-config.json
+cp andrej-karpathy-llm-memory/.env.example andrej-karpathy-llm-memory/.env
+cp andrej-karpathy-llm-memory/flush-config.json.example andrej-karpathy-llm-memory/flush-config.json
 ```
 
 To use DeepSeek for cheaper session summarization, add your key to `.env`:
@@ -104,11 +104,11 @@ To use DeepSeek for cheaper session summarization, add your key to `.env`:
 DEEPSEEK_API_KEY=sk-your-key-here
 ```
 
-To customize vault path (default: `obsidian-vault` sibling to `karpathy-wiki/`):
+To customize vault path (default: `obsidian-vault` sibling to `andrej-karpathy-llm-memory/`):
 ```bash
-echo "WIKI_VAULT_DIR=my-project-wiki" >> karpathy-wiki/.env
+echo "WIKI_VAULT_DIR=my-project-wiki" >> andrej-karpathy-llm-memory/.env
 # or absolute path:
-echo "WIKI_VAULT_PATH=/absolute/path/to/vault" >> karpathy-wiki/.env
+echo "WIKI_VAULT_PATH=/absolute/path/to/vault" >> andrej-karpathy-llm-memory/.env
 ```
 
 ## Usage
@@ -125,21 +125,21 @@ Hooks fire during coding sessions:
 
 ```bash
 # Compile all unprocessed sources into wiki pages
-uv run --directory karpathy-wiki python scripts/compile.py
+uv run --directory andrej-karpathy-llm-memory python scripts/compile.py
 
 # Compile only daily/ or raw/
-uv run --directory karpathy-wiki python scripts/compile.py --source daily
-uv run --directory karpathy-wiki python scripts/compile.py --source raw
+uv run --directory andrej-karpathy-llm-memory python scripts/compile.py --source daily
+uv run --directory andrej-karpathy-llm-memory python scripts/compile.py --source raw
 
 # Compile a specific file
-uv run --directory karpathy-wiki python scripts/compile.py --file raw/my-article.md
+uv run --directory andrej-karpathy-llm-memory python scripts/compile.py --file raw/my-article.md
 
 # Query the knowledge base
-uv run --directory karpathy-wiki python scripts/query.py "How does auth work?"
+uv run --directory andrej-karpathy-llm-memory python scripts/query.py "How does auth work?"
 
 # Health check
-uv run --directory karpathy-wiki python scripts/lint.py
-uv run --directory karpathy-wiki python scripts/lint.py --structural-only  # free, no LLM
+uv run --directory andrej-karpathy-llm-memory python scripts/lint.py
+uv run --directory andrej-karpathy-llm-memory python scripts/lint.py --structural-only  # free, no LLM
 ```
 
 ### Interactive (via AI assistant)
@@ -152,7 +152,7 @@ Tell your assistant:
 ## Project Structure
 
 ```
-karpathy-wiki/                  # This repo — add to any project as a submodule
+andrej-karpathy-llm-memory/                  # This repo — add to any project as a submodule
 ├── assets/                      # Diagrams and images
 ├── scripts/
 │   ├── compile.py               # Unified compiler: raw/ + daily/ → wiki/

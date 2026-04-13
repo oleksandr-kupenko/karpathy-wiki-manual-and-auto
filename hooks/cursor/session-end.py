@@ -12,7 +12,7 @@ Configure in .cursor/hooks.json:
     "version": 1,
     "hooks": {
         "sessionEnd": [{
-            "command": "uv run --directory karpathy-wiki python hooks/cursor/session-end.py",
+            "command": "uv run --directory andrej-karpathy-llm-memory python hooks/cursor/session-end.py",
             "timeout": 10
         }]
     }
@@ -39,7 +39,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-# hooks/cursor/session-end.py → hooks/cursor/ → hooks/ → karpathy-wiki/
+# hooks/cursor/session-end.py → hooks/cursor/ → hooks/ → andrej-karpathy-llm-memory/
 ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPTS_DIR = ROOT / "scripts"
 STATE_DIR = SCRIPTS_DIR
