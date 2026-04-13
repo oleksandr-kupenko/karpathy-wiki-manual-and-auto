@@ -9,7 +9,7 @@ const MAX_TURNS = 30
 const MAX_FLUSH_CHARS = 15_000
 
 export default (async ({ client, directory }) => {
-  const compilerDir = join(resolve(directory), "andrej-karpathy-llm-memory")
+  const compilerDir = join(resolve(directory), "karpathy-wiki-manual-and-auto")
   if (!existsSync(compilerDir)) return {}
 
   const vaultDir = join(resolve(directory), process.env.WIKI_VAULT_DIR || "obsidian-vault")

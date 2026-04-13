@@ -10,7 +10,7 @@ Configure in .cursor/hooks.json:
     "version": 1,
     "hooks": {
         "sessionStart": [{
-            "command": "uv run --directory andrej-karpathy-llm-memory python hooks/cursor/session-start.py"
+            "command": "uv run --directory karpathy-wiki-manual-and-auto python hooks/cursor/session-start.py"
         }]
     }
 }
@@ -26,7 +26,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-# hooks/cursor/session-start.py → hooks/cursor/ → hooks/ → andrej-karpathy-llm-memory/
+# hooks/cursor/session-start.py → hooks/cursor/ → hooks/ → karpathy-wiki-manual-and-auto/
 ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPTS_DIR = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))

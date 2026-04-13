@@ -10,7 +10,7 @@ Configure in .claude/settings.json:
     "hooks": {
         "SessionStart": [{
             "matcher": "",
-            "command": "uv run --directory andrej-karpathy-llm-memory python hooks/session-start.py"
+            "command": "uv run --directory karpathy-wiki-manual-and-auto python hooks/session-start.py"
         }]
     }
 }
