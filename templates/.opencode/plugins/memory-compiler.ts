@@ -117,14 +117,22 @@ export default (async ({ client, directory }) => {
     } catch {}
   }
 
+  let cachedContext: string | null = null
+
   return {
+    "experimental.chat.system.transform": async (_input: any, output: any) => {
+      if (!cachedContext) cachedContext = buildContext()
+      output.system.push(cachedContext)
+    },
+
     "experimental.session.compacting": async (_input: any, output: any) => {
-      output.context.push(buildContext())
+      output.context.push(cachedContext ?? buildContext())
     },
 
     event: async ({ event }: { event: any }) => {
       if (event.type === "session.idle") {
         const sid = event.data?.id ?? event.data?.session_id ?? "unknown"
+        cachedContext = null
         await flushSession(sid)
       }
     },
