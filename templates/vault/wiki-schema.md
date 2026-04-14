@@ -79,11 +79,12 @@ related:
 
 ## Subfolder Conventions
 
+Two folders only (aligned with [coleam00/claude-memory-compiler](https://github.com/coleam00/claude-memory-compiler)):
+
 | Folder | Purpose | Example pages |
 |--------|---------|---------------|
-| `wiki/concepts/` | Facts, patterns, how things work — bugs, features, architecture, domain knowledge, ops, anything concrete | `auth-server.md`, `ytdlp-proxy-chain.md`, `deployment.md` |
-| `wiki/decisions/` | Why X over Y — architectural choices, trade-offs, design rationale | `why-markdown-wiki-not-rag.md` |
-| `wiki/connections/` | Non-obvious links between 2+ concepts across topics | `auth-and-api-design.md` |
+| `wiki/concepts/` | Atomic pages: facts, patterns, bugs, features, architecture notes, domain knowledge, ops | `auth-server.md`, `ytdlp-proxy-chain.md`, `deployment.md` |
+| `wiki/connections/` | Articles that mainly relate 2+ topics: workflows, cross-stack rationale | `auth-and-api-design.md`, `why-markdown-wiki-not-rag.md` |
 
 ## Token Economy
 

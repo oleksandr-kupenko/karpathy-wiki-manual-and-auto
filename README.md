@@ -17,6 +17,17 @@ Permanent memory for AI coding assistants (Claude Code, OpenCode). Based on [And
 - `flush.py` — DeepSeek (if API key set) **or** Claude Agent SDK (automatic fallback)
 - `compile.py` — **OpenCode** (free, recommended) **or** DeepSeek API **or** Claude Agent SDK
 
+## Wiki folders (`wiki/`)
+
+Compiled markdown lives under **exactly two** subfolders — same convention as [coleam00/claude-memory-compiler](https://github.com/coleam00/claude-memory-compiler):
+
+| Folder | Use it for |
+|--------|------------|
+| `wiki/concepts/` | Atomic pages: patterns, bug writeups, how a feature works, ops commands, domain facts |
+| `wiki/connections/` | Cross-cutting pages: workflows, design rationale that spans several areas, explicit links between topics |
+
+`scripts/config.py` lists these in `WIKI_SUBDIRS` (used by `compile.py`, `lint.py`, `utils.py`). The vault template ships with empty `wiki/concepts/` and `wiki/connections/` (see `templates/vault/wiki/`).
+
 ## Quick Start
 
 ### 1. Install into your project
@@ -195,7 +206,7 @@ karpathy-wiki-manual-and-auto/                  # This repo — add to any proje
 │       ├── session-end.py       # Cursor AI: extract conversation (sessionEnd hook)
 │       └── pre-compact.py       # Cursor AI: save context before compaction
 ├── templates/                   # Copy these into your project once at setup
-│   ├── vault/                   # Empty Obsidian vault skeleton
+│   ├── vault/                   # Obsidian vault skeleton (`wiki/concepts` + `wiki/connections`)
 │   ├── .claude/                 # settings.json (hook wiring) + wiki-ingest skill
 │   ├── .opencode/               # OpenCode memory plugin
 │   ├── opencode.json            # OpenCode config
@@ -245,7 +256,7 @@ uv run python scripts/compile.py
 The compile will:
 1. Read `COMPILE_INSTRUCTIONS.md` from the vault
 2. Process `daily/` or `raw/` files
-3. Create wiki pages in `wiki/` subfolders
+3. Create wiki pages in `wiki/concepts/` or `wiki/connections/`
 4. Update `index.md` and `log.md`
 
 Make sure OpenCode is installed:
@@ -261,4 +272,5 @@ npm install -g opencode
 ## Credits
 
 - [Andrej Karpathy](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) — original method
+- [coleam00/claude-memory-compiler](https://github.com/coleam00/claude-memory-compiler) — two-folder wiki layout (`concepts/` + `connections/`) and related ideas
 - [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-python) — agent loop for compile.py

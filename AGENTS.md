@@ -31,10 +31,11 @@ LLM-owned, human-readable. One index, one log.
 
 ```
 wiki/
-├── concepts/        Facts, patterns, how things work (bugs, features, architecture, domain, ops — all here)
-├── decisions/       Why X over Y — design rationale, trade-offs
-└── connections/     Non-obvious links between 2+ concepts across topics
+├── concepts/        Atomic knowledge: facts, patterns, bugs, features, system notes, domain, ops
+└── connections/     Cross-cutting links, workflows, rationale spanning multiple topics
 ```
+
+Same **two-folder** layout as [coleam00/claude-memory-compiler](https://github.com/coleam00/claude-memory-compiler) (`concepts/` + `connections/`). Older vaults with extra subfolders are optional; scripts only scan `WIKI_SUBDIRS` from `scripts/config.py`.
 
 ### Structural Files
 

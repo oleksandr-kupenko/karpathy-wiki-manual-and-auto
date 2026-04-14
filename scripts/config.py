@@ -33,7 +33,6 @@ STATE_FILE = SCRIPTS_DIR / "state.json"
 
 WIKI_SUBDIRS = [
     "concepts",
-    "decisions",
     "connections",
 ]
 

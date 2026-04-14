@@ -49,7 +49,7 @@ async def run_query(question: str, file_back: bool = False) -> str:
 
 ## File Back Instructions
 
-After answering, create a wiki page in `wiki/concepts/` or `wiki/features/` (whichever is more appropriate) with the answer, then update `{INDEX_FILE.name}` and append to `{LOG_FILE.name}`.
+After answering, create a wiki page in `wiki/concepts/` (atomic answer) or `wiki/connections/` (if the answer is mainly how multiple topics relate), then update `{INDEX_FILE.name}` and append to `{LOG_FILE.name}`.
 """
 
     prompt = f"""You are a knowledge base query engine. Answer the user's question by

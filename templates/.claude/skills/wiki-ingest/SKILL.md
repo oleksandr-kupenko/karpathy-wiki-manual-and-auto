@@ -12,7 +12,7 @@ description: Unified wiki compiler. Processes sources from raw/ (immutable, manu
 
 Processes sources from `raw/` (immutable) and `daily/` (ephemeral) into structured wiki pages.
 
-## Architecture
+## Source pipeline
 
 ```
 raw/     → compile.py → wiki/    (immutable sources, manual: devlog, articles)
@@ -87,15 +87,12 @@ uv run --directory karpathy-wiki-manual-and-auto python scripts/lint.py --struct
 
 ## Wiki Page Folders
 
+Two folders only (same idea as [coleam00/claude-memory-compiler](https://github.com/coleam00/claude-memory-compiler)):
+
 | Folder | When to use |
 |--------|-------------|
-| `wiki/architecture/` | System design, data flows, component relationships |
-| `wiki/decisions/` | Architectural/design decisions with rationale |
-| `wiki/bugs/` | Notable bugs, root causes, fixes |
-| `wiki/features/` | Feature design docs, implementation notes |
-| `wiki/concepts/` | Domain concepts, glossary, patterns |
-| `wiki/operations/` | Deployment, infrastructure, CI/CD, tooling |
-| `wiki/connections/` | Cross-cutting insights linking 2+ concepts |
+| `wiki/concepts/` | Atomic pages: patterns, bugs, features, system design notes, ops, glossary |
+| `wiki/connections/` | Cross-cutting pages: workflows, how multiple systems/topics relate, spanning ADRs |
 
 ## Wiki Page Format
 

@@ -12,7 +12,7 @@ import argparse
 import asyncio
 from pathlib import Path
 
-from config import REPORTS_DIR, WIKI_DIR, now_iso, today_iso
+from config import REPORTS_DIR, WIKI_DIR, WIKI_SUBDIRS, now_iso, today_iso
 from utils import (
     count_inbound_links,
     extract_wikilinks,
@@ -118,7 +118,7 @@ def check_missing_backlinks() -> list[dict]:
             if wiki_page_exists(link):
                 target_path = WIKI_DIR / f"{link}.md"
                 if not target_path.exists():
-                    for subdir in (WIKI_DIR / s for s in ["architecture", "decisions", "bugs", "features", "concepts", "operations", "connections"]):
+                    for subdir in (WIKI_DIR / s for s in WIKI_SUBDIRS):
                         candidate = subdir / f"{link}.md"
                         if candidate.exists():
                             target_path = candidate

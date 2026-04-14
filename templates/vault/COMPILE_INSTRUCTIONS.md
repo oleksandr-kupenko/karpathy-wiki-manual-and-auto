@@ -32,14 +32,10 @@ Content here.
 
 ## Folders
 
-Use the subfolders that exist in your wiki/ directory:
-- `wiki/concepts/` — facts, patterns, how things work
-- `wiki/decisions/` — why X over Y
-- `wiki/connections/` — non-obvious links between concepts
-- `wiki/architecture/` — system design (if exists)
-- `wiki/bugs/` — bugs and fixes (if exists)
-- `wiki/features/` — features (if exists)
-- `wiki/operations/` — operations (if exists)
+Use **only** these two subfolders under `wiki/` (same model as [coleam00/claude-memory-compiler](https://github.com/coleam00/claude-memory-compiler)):
+
+- `wiki/concepts/` — single-topic pages: facts, patterns, bugs, features, design notes, ops
+- `wiki/connections/` — pages whose main value is linking multiple topics (workflows, spanning decisions)
 
 ## IMPORTANT
 

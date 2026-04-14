@@ -48,9 +48,8 @@ ENV_FILE = ROOT_DIR / ".env"
 WIKI_FOLDER_DESCRIPTIONS = """\
 | Folder | When to use |
 |--------|-------------|
-| `wiki/concepts/` | Facts, patterns, how things work — bugs, features, architecture, domain knowledge, operations |
-| `wiki/decisions/` | Why X over Y — architectural choices, trade-offs, design rationale |
-| `wiki/connections/` | Non-obvious links between 2+ concepts across topics |
+| `wiki/concepts/` | Atomic pages: facts, patterns, how things work — bugs, features, system design notes, domain knowledge, ops, ADRs that fit one topic |
+| `wiki/connections/` | Cross-cutting articles: how multiple topics relate, workflows, design rationale spanning systems (same two-folder model as [coleam00/claude-memory-compiler](https://github.com/coleam00/claude-memory-compiler)) |
 """
 
 
@@ -143,7 +142,7 @@ Read the source above and compile it into wiki pages.
 1. Classify each piece of knowledge into the correct subfolder.
 2. Create wiki pages — one .md file per topic. Each page MUST have YAML frontmatter: `title`, `tags`, `date`, `sources`, `related` (using [[wikilinks]]).
 3. Update existing pages if new sources add information to topics already covered.
-4. Create connection articles in `wiki/connections/` if relationships revealed.
+4. Prefer `wiki/concepts/` for single-topic pages; use `wiki/connections/` when the source mainly links multiple areas.
 5. Update `index.md` — add new pages to the correct table, update counts.
 6. Append to `log.md`.
 

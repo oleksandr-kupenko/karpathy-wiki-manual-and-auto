@@ -354,7 +354,7 @@ wheels = [
 ]
 
 [[package]]
-name = "llm-personal-kb"
+name = "karpathy-wiki"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

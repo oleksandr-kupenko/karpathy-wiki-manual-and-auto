@@ -7,47 +7,19 @@
 
 Start here. Every wiki page is listed below with a one-line summary.
 
-## Architecture
-
-| Page | Summary |
-|------|---------|
-| *(empty)* | |
-
-## Decisions
-
-| Page | Summary | Date |
-|------|---------|------|
-| *(empty)* | | |
-
-## Bugs & Fixes
-
-| Page | Summary | Date |
-|------|---------|------|
-| *(empty)* | | |
-
-## Features
-
-| Page | Summary | Date |
-|------|---------|------|
-| *(empty)* | | |
+Compiled articles live under **`wiki/concepts/`** and **`wiki/connections/`** only (two-folder layout).
 
 ## Concepts
 
-| Page | Summary |
-|------|---------|
-| *(empty)* | |
+| Page | Summary | Date |
+|------|---------|------|
+| *(empty)* | | |
 
 ## Connections
 
-| Page | Summary |
-|------|---------|
-| *(empty)* | |
-
-## Operations
-
-| Page | Summary |
-|------|---------|
-| *(empty)* | |
+| Page | Summary | Date |
+|------|---------|------|
+| *(empty)* | | |
 
 ## Raw Sources (unprocessed)
 
