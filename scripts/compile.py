@@ -87,6 +87,7 @@ def source_type_label(path: Path) -> str:
 
 async def compile_source_opencode(source_path: Path, state: dict) -> float:
     """Compile using opencode run command."""
+    source_hash = file_hash(source_path)
     source_content = source_path.read_text(encoding="utf-8")
     schema = WIKI_SCHEMA_FILE.read_text(encoding="utf-8")
     wiki_index = read_wiki_index()
@@ -188,7 +189,7 @@ Now execute."""
     rel_path = source_path.name if src_type == "daily" else str(source_path.relative_to(RAW_DIR))
     state_key = f"{src_type}/{rel_path}"
     state.setdefault("ingested", {})[state_key] = {
-        "hash": file_hash(source_path),
+        "hash": source_hash,
         "type": src_type,
         "compiled_at": now_iso(),
         "cost_usd": cost,
@@ -203,6 +204,7 @@ async def compile_source_deepseek(source_path: Path, state: dict) -> float:
     """Compile using DeepSeek API."""
     from openai import OpenAI
 
+    source_hash = file_hash(source_path)
     source_content = source_path.read_text(encoding="utf-8")
     schema = WIKI_SCHEMA_FILE.read_text(encoding="utf-8")
     wiki_index = read_wiki_index()
@@ -272,7 +274,7 @@ Write to {WIKI_DIR} subfolders. Update {INDEX_FILE} and {LOG_FILE}."""
     rel_path = source_path.name if src_type == "daily" else str(source_path.relative_to(RAW_DIR))
     state_key = f"{src_type}/{rel_path}"
     state.setdefault("ingested", {})[state_key] = {
-        "hash": file_hash(source_path),
+        "hash": source_hash,
         "type": src_type,
         "compiled_at": now_iso(),
         "cost_usd": cost,
