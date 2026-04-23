@@ -1,101 +1,85 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
-  <style>
-    text { font-family: "DejaVu Sans", "Segoe UI", sans-serif; fill: #ddd; }
-    .mono { font-family: "DejaVu Sans Mono", "Courier New", monospace; }
-    .title { font-size: 18px; font-weight: bold; fill: #ddd; }
-    .label { font-size: 14px; }
-    .dim { font-size: 12px; fill: #999; }
-    .blue { fill: #64b4ff; }
-    .green { fill: #50d280; }
-    .purple { fill: #b480ff; }
-    .conn-green { fill: #50c878; }
-  </style>
-  <rect width="900" height="520" fill="#121212" rx="0"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 480" width="1060" height="480" font-family="Inter, system-ui, -apple-system, sans-serif">
+  <rect width="1060" height="480" fill="#ffffff"/>
 
   <!-- Title -->
-  <text x="450" y="34" text-anchor="middle" class="title">Karpathy Wiki — Architecture</text>
+  <text x="530" y="38" text-anchor="middle" font-size="24" font-weight="700" fill="#1e40af">Karpathy Wiki — Pipeline</text>
+
+  <!-- SOURCES label -->
+  <text x="180" y="92" text-anchor="middle" font-size="13" font-weight="600" fill="#94a3b8" letter-spacing="2">SOURCES</text>
 
   <!-- raw/ box -->
-  <rect x="50" y="80" width="160" height="100" rx="10" fill="#1e3c5a" stroke="#4682b4" stroke-width="2"/>
-  <text x="130" y="106" text-anchor="middle" class="mono blue" font-size="14">raw/</text>
-  <text x="130" y="126" text-anchor="middle" class="dim">immutable</text>
-  <text x="130" y="142" text-anchor="middle" class="dim">devlog, articles,</text>
-  <text x="130" y="158" text-anchor="middle" class="dim">transcripts</text>
+  <rect x="80" y="115" width="200" height="65" rx="8" fill="#fff7ed" stroke="#c2410c" stroke-width="2"/>
+  <text x="180" y="140" text-anchor="middle" font-size="18" font-weight="600" fill="#c2410c">raw/</text>
+  <text x="180" y="158" text-anchor="middle" font-size="11" fill="#78716c">Manual: devlog, articles</text>
+  <text x="180" y="196" text-anchor="middle" font-size="11" fill="#94a3b8" font-style="italic">Immutable — never deleted</text>
 
   <!-- daily/ box -->
-  <rect x="50" y="210" width="160" height="100" rx="10" fill="#1e3c5a" stroke="#4682b4" stroke-width="2"/>
-  <text x="130" y="236" text-anchor="middle" class="mono blue" font-size="14">daily/</text>
-  <text x="130" y="256" text-anchor="middle" class="dim">ephemeral</text>
-  <text x="130" y="272" text-anchor="middle" class="dim">session summaries</text>
-  <text x="130" y="288" text-anchor="middle" class="dim">from hooks</text>
+  <rect x="80" y="240" width="200" height="65" rx="8" fill="#fff7ed" stroke="#c2410c" stroke-width="2"/>
+  <text x="180" y="265" text-anchor="middle" font-size="18" font-weight="600" fill="#c2410c">daily/</text>
+  <text x="180" y="283" text-anchor="middle" font-size="11" fill="#78716c">Auto: session summaries</text>
+  <text x="180" y="321" text-anchor="middle" font-size="11" fill="#94a3b8" font-style="italic">Ephemeral — deleted after compile</text>
+
+  <!-- COMPILE box (center) -->
+  <rect x="410" y="170" width="220" height="100" rx="10" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2"/>
+  <text x="520" y="210" text-anchor="middle" font-size="20" font-weight="700" fill="#6d28d9">Compile</text>
+  <text x="520" y="232" text-anchor="middle" font-size="13" fill="#7c3aed">LLM or Manual</text>
+  <text x="520" y="250" text-anchor="middle" font-size="11" fill="#8b5cf6">(assistant reads &amp; creates .md)</text>
+
+  <!-- WIKI OUTPUT label -->
+  <rect x="745" y="80" width="210" height="4" rx="2" fill="#a7f3d0"/>
+  <text x="850" y="76" text-anchor="middle" font-size="13" font-weight="600" fill="#94a3b8" letter-spacing="2">WIKI OUTPUT</text>
+
+  <!-- concepts/ box -->
+  <rect x="745" y="115" width="210" height="65" rx="8" fill="#a7f3d0" stroke="#047857" stroke-width="2"/>
+  <text x="850" y="140" text-anchor="middle" font-size="18" font-weight="600" fill="#047857">concepts/</text>
+  <text x="850" y="158" text-anchor="middle" font-size="11" fill="#065f46">Patterns, bugs, features, how-tos</text>
+
+  <!-- connections/ box -->
+  <rect x="745" y="240" width="210" height="65" rx="8" fill="#a7f3d0" stroke="#047857" stroke-width="2"/>
+  <text x="850" y="265" text-anchor="middle" font-size="18" font-weight="600" fill="#047857">connections/</text>
+  <text x="850" y="283" text-anchor="middle" font-size="11" fill="#065f46">Workflows, cross-cutting rationale</text>
+
+  <!-- "Only 2 folders" note -->
+  <text x="850" y="330" text-anchor="middle" font-size="13" font-weight="600" fill="#047857">Only 2 folders. Simple.</text>
+
+  <!-- index.md / log.md -->
+  <text x="520" y="360" text-anchor="middle" font-size="15" font-weight="600" fill="#3b82f6">index.md · log.md</text>
+  <text x="520" y="380" text-anchor="middle" font-size="11" fill="#94a3b8">Catalog · Audit trail (auto-updated)</text>
+
+  <!-- Session Start (top) -->
+  <rect x="420" y="42" width="200" height="40" rx="6" fill="#dbeafe" stroke="#1e40af" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="520" y="67" text-anchor="middle" font-size="13" fill="#1e40af">Session Start → reads index.md</text>
 
   <!-- Arrows: sources → compile -->
-  <line x1="210" y1="130" x2="288" y2="174" stroke="#999" stroke-width="2"/>
-  <polygon points="288,174 276,166 280,178" fill="#999"/>
-  <line x1="210" y1="260" x2="288" y2="196" stroke="#999" stroke-width="2"/>
-  <polygon points="288,196 276,188 280,200" fill="#999"/>
+  <defs>
+    <marker id="ah-orange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#c2410c"/>
+    </marker>
+    <marker id="ah-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#047857"/>
+    </marker>
+    <marker id="ah-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#3b82f6"/>
+    </marker>
+  </defs>
 
-  <!-- compile.py box -->
-  <rect x="290" y="120" width="170" height="130" rx="12" fill="#32285a" stroke="#8c64d4" stroke-width="2"/>
-  <text x="375" y="150" text-anchor="middle" class="mono purple" font-size="14">compile.py</text>
-  <text x="375" y="171" text-anchor="middle" class="dim">Claude Agent SDK</text>
-  <text x="375" y="189" text-anchor="middle" class="dim">reads sources,</text>
-  <text x="375" y="205" text-anchor="middle" class="dim">creates / updates</text>
-  <text x="375" y="221" text-anchor="middle" class="dim">wiki pages</text>
+  <!-- raw → compile -->
+  <line x1="280" y1="148" x2="408" y2="195" stroke="#c2410c" stroke-width="2" marker-end="url(#ah-orange)"/>
+  <!-- daily → compile -->
+  <line x1="280" y1="273" x2="408" y2="240" stroke="#c2410c" stroke-width="2" marker-end="url(#ah-orange)"/>
+  <!-- compile → concepts -->
+  <line x1="632" y1="200" x2="743" y2="155" stroke="#047857" stroke-width="2" marker-end="url(#ah-green)"/>
+  <!-- compile → connections -->
+  <line x1="632" y1="235" x2="743" y2="268" stroke="#047857" stroke-width="2" marker-end="url(#ah-green)"/>
+  <!-- compile → index.md -->
+  <line x1="520" y1="272" x2="520" y2="348" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah-blue)"/>
 
-  <!-- Arrow: compile → wiki -->
-  <line x1="460" y1="185" x2="538" y2="185" stroke="#999" stroke-width="2"/>
-  <polygon points="538,185 526,179 526,191" fill="#999"/>
-
-  <!-- wiki/ outer box -->
-  <rect x="540" y="60" width="310" height="320" rx="14" fill="#14322318" stroke="#32a050" stroke-width="2"/>
-  <text x="695" y="90" text-anchor="middle" class="mono green" font-size="15">wiki/</text>
-
-  <!-- concepts/ -->
-  <rect x="558" y="105" width="274" height="72" rx="8" fill="#193c28" stroke="#50c878" stroke-width="1"/>
-  <text x="695" y="127" text-anchor="middle" class="mono conn-green" font-size="13">concepts/</text>
-  <text x="695" y="147" text-anchor="middle" class="dim">facts, patterns, how things work</text>
-  <text x="695" y="163" text-anchor="middle" class="dim">bugs · features · architecture · ops</text>
-
-  <!-- decisions/ -->
-  <rect x="558" y="189" width="274" height="72" rx="8" fill="#193c28" stroke="#50c878" stroke-width="1"/>
-  <text x="695" y="211" text-anchor="middle" class="mono conn-green" font-size="13">decisions/</text>
-  <text x="695" y="231" text-anchor="middle" class="dim">why X over Y</text>
-  <text x="695" y="247" text-anchor="middle" class="dim">trade-offs, rationale</text>
-
-  <!-- connections/ -->
-  <rect x="558" y="273" width="274" height="72" rx="8" fill="#193c28" stroke="#50c878" stroke-width="1"/>
-  <text x="695" y="295" text-anchor="middle" class="mono conn-green" font-size="13">connections/</text>
-  <text x="695" y="315" text-anchor="middle" class="dim">non-obvious links</text>
-  <text x="695" y="331" text-anchor="middle" class="dim">between 2+ concepts</text>
-
-  <!-- Hooks section -->
-  <rect x="50" y="390" width="740" height="105" rx="12" fill="#1e1e28" stroke="#505064" stroke-width="1"/>
-  <text x="420" y="415" text-anchor="middle" class="label" font-size="14">Hooks (Claude Code / OpenCode / Cursor)</text>
-
-  <!-- hook dividers -->
-  <line x1="235" y1="425" x2="235" y2="486" stroke="#404058" stroke-width="1"/>
-  <line x1="420" y1="425" x2="420" y2="486" stroke="#404058" stroke-width="1"/>
-  <line x1="605" y1="425" x2="605" y2="486" stroke="#404058" stroke-width="1"/>
-
-  <text x="142" y="445" text-anchor="middle" class="mono blue" font-size="12">session-start</text>
-  <text x="142" y="462" text-anchor="middle" class="dim">inject index.md</text>
-  <text x="142" y="477" text-anchor="middle" class="dim">into context</text>
-
-  <text x="327" y="445" text-anchor="middle" class="mono blue" font-size="12">session-end</text>
-  <text x="327" y="462" text-anchor="middle" class="dim">extract → flush.py</text>
-  <text x="327" y="477" text-anchor="middle" class="dim">→ daily/</text>
-
-  <text x="512" y="445" text-anchor="middle" class="mono blue" font-size="12">pre-compact</text>
-  <text x="512" y="462" text-anchor="middle" class="dim">save context</text>
-  <text x="512" y="477" text-anchor="middle" class="dim">before compaction</text>
-
-  <text x="697" y="445" text-anchor="middle" class="mono blue" font-size="12">flush.py</text>
-  <text x="697" y="462" text-anchor="middle" class="dim">DeepSeek or Claude</text>
-  <text x="697" y="477" text-anchor="middle" class="dim">→ daily/YYYY-MM-DD.md</text>
-
-  <!-- small upward arrow from hooks to daily -->
-  <line x1="230" y1="390" x2="130" y2="310" stroke="#508050" stroke-width="1" stroke-dasharray="4,3"/>
-  <polygon points="130,310 124,322 136,320" fill="#508050"/>
+  <!-- Folder structure (bottom) -->
+  <rect x="60" y="410" width="940" height="55" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="530" y="434" text-anchor="middle" font-size="12" fill="#64748b" font-family="monospace">
+    ~/WIKI/project-name/
+  </text>
+  <text x="530" y="454" text-anchor="middle" font-size="12" fill="#94a3b8" font-family="monospace">
+    ├── compiler/  (this repo: scripts, hooks)  ·  └── obsidian/  (the vault: index, raw, daily, wiki)
+  </text>
 </svg>
