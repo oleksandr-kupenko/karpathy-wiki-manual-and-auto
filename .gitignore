@@ -21,8 +21,9 @@ reports/
 # Secrets
 .env
 
-# Flush config (per-project)
+# Config (per-project, contains local paths/keys)
 flush-config.json
+compile-config.json
 
 # OS files
 .DS_Store

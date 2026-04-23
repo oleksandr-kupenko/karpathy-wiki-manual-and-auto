@@ -9,10 +9,11 @@ const MAX_TURNS = 30
 const MAX_FLUSH_CHARS = 15_000
 
 export default (async ({ client, directory }) => {
-  const compilerDir = join(resolve(directory), "karpathy-wiki-manual-and-auto")
+  const wikiBase = join(resolve(directory), "..", "..", "WIKI", "PROJECT-NAME")
+  const compilerDir = join(wikiBase, "compiler")
   if (!existsSync(compilerDir)) return {}
 
-  const vaultDir = join(resolve(directory), process.env.WIKI_VAULT_DIR || "obsidian-vault")
+  const vaultDir = join(wikiBase, "obsidian")
   const dailyDir = join(vaultDir, "daily")
   const scriptsDir = join(compilerDir, "scripts")
 
@@ -26,7 +27,6 @@ export default (async ({ client, directory }) => {
       const d = new Date()
       d.setDate(d.getDate() - i)
       const dateStr = d.toISOString().split("T")[0]
-      // Collect all daily files for this date: YYYY-MM-DD.md, YYYY-MM-DD_claude.md, etc.
       let files: string[] = []
       try {
         files = readdirSync(dailyDir)

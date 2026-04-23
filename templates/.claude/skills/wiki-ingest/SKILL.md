@@ -1,117 +1,166 @@
 ---
 name: wiki-ingest
-description: Unified wiki compiler. Processes sources from raw/ (immutable, manual) and daily/ (ephemeral, auto-generated) into structured wiki pages. Trigger when user says "ingest", "process raw", "wiki ingest", "переведи в wiki", "обработай raw", or "remember this" / "note this". Also handles "lint the wiki".
+description: Wiki compiler skill. Trigger when user says "ingest", "create wiki", "compile wiki", "обработай", "переведи в wiki", "remember this", "note this", or "lint the wiki". Creates wiki pages from daily logs and raw sources.
 ---
 
 <!--
-  Vault path: obsidian-vault (default WIKI_VAULT_DIR).
-  If you set a different WIKI_VAULT_DIR, update every "obsidian-vault/" path in this file.
+  IMPORTANT: Update all paths below to match your actual setup.
+  Default assumes wiki at ~/WIKI/<project>/obsidian/ and compiler at ~/WIKI/<project>/compiler/
 -->
 
-# Wiki Ingest — Unified Source → Wiki Pipeline
+# Wiki Ingest Skill
 
-Processes sources from `raw/` (immutable) and `daily/` (ephemeral) into structured wiki pages.
+## Vault Location
 
-## Source pipeline
+All wiki files live at: `~/WIKI/PROJECT-NAME/obsidian/`
 
 ```
-raw/     → compile.py → wiki/    (immutable sources, manual: devlog, articles)
-daily/   → compile.py → wiki/    (ephemeral, auto-generated from sessions, deleted after processing)
-                      → index.md (one index)
-                      → log.md   (one log)
+obsidian/
+├── index.md              ← Master catalog — READ FIRST
+├── log.md                ← Append-only activity log
+├── wiki-schema.md        ← Schema and conventions
+├── daily/                ← Ephemeral session logs (DELETE after compiling)
+├── raw/                  ← Immutable source documents (NEVER delete)
+└── wiki/
+    ├── concepts/         ← Atomic knowledge: patterns, bugs, features, how-tos
+    └── connections/      ← Cross-cutting pages linking multiple topics
 ```
 
-One compiler (`compile.py`) handles both source types. Automatic compilation triggered after 18:00 by `flush.py`. Manual via CLI or skill.
+## Compilation Mode
 
-## Paths
+### Default: Manual (Free)
 
-- **Vault root:** `obsidian-vault/`
-- **Raw sources:** `obsidian-vault/raw/` (immutable — never modify or delete)
-- **Daily logs:** `obsidian-vault/daily/` (ephemeral — deleted after successful compilation)
-- **Wiki pages:** `obsidian-vault/wiki/` (subfolders below)
-- **Index:** `obsidian-vault/index.md` (single unified index)
-- **Log:** `obsidian-vault/log.md` (single unified log)
-- **Schema:** `obsidian-vault/wiki-schema.md`
-- **Compiler:** `karpathy-wiki-manual-and-auto/scripts/compile.py`
+When the user says "ingest", "create wiki", "compile wiki", "обработай", etc.:
 
-## When to Trigger
+**You (the assistant) compile wiki pages directly** — read source files, create .md pages, update index. No scripts needed. This is the default and recommended approach.
 
-1. User says "ingest", "process raw", "wiki ingest", "переведи в wiki", "обработай raw"
-2. User adds files to `raw/` or `daily/` and asks to process them
-3. User says "remember this" / "note this" / "запомни" (create wiki page from conversation)
-4. User says "lint the wiki" / "check wiki health"
+### Optional: Automatic (Script-based, Paid)
 
-## Step-by-Step: Ingest
-
-### 1. Run the compiler
-
+If `~/WIKI/PROJECT-NAME/compiler/.env` has API keys configured, you can also run:
 ```bash
-uv run --directory karpathy-wiki-manual-and-auto python scripts/compile.py              # all unprocessed
-uv run --directory karpathy-wiki-manual-and-auto python scripts/compile.py --source raw  # only raw/
-uv run --directory karpathy-wiki-manual-and-auto python scripts/compile.py --source daily # only daily/
-uv run --directory karpathy-wiki-manual-and-auto python scripts/compile.py --file <path> # specific file
-uv run --directory karpathy-wiki-manual-and-auto python scripts/compile.py --dry-run     # preview
+uv run --directory ~/WIKI/PROJECT-NAME/compiler python scripts/compile.py
 ```
+This uses an LLM API (DeepSeek or Claude Agent SDK) to compile automatically. **Only use this if the user explicitly set up API keys and asked for script-based compilation.**
 
-The compiler uses Claude Agent SDK to read sources and create/update wiki pages directly.
+---
 
-### 2. Verify results
+## Step-by-Step: Manual Compilation (Default)
 
-After compilation:
-- Check `obsidian-vault/index.md` for new pages
-- Check `obsidian-vault/log.md` for the compilation entry
-- Processed `daily/` files are automatically deleted
+When the user says "ingest", "create wiki from daily", "обработай":
 
-### 3. Manual override (if needed)
+### 1. Read sources
 
-If the compiler missed something or you need fine-grained control:
+Read all files in `obsidian/daily/` (and `obsidian/raw/` if asked).
+Read `obsidian/index.md` to understand existing pages.
 
-1. Read the source file
-2. Create wiki page manually in the correct subfolder
-3. Update `index.md` and `log.md`
+### 2. Filter: What's Worth a Wiki Page
 
-## Step-by-Step: "Remember This"
+**Skip (do NOT create pages for):**
+- Debugging sessions that led nowhere
+- UI tweaks with no architectural impact
+- Failed hypotheses
+- `FLUSH_OK - Nothing worth saving` entries
+- Routine tool calls or file reads
+- Feature requests not yet implemented
 
-When user says "remember this" / "note this" without a source:
+**Keep (create or update pages for):**
+- Bugs found and fixed (root cause + solution)
+- Features implemented (architecture, decisions, key files)
+- Architectural decisions with rationale
+- Patterns, gotchas, lessons learned
+- Significant refactoring (what changed and why)
+- Config/infra changes affecting production
 
-1. Create wiki page from conversation context
-2. No `sources:` in frontmatter (or `sources: [conversation]`)
-3. Update `index.md` + `log.md`
+**When updating is enough:** If a session adds minor context to an existing topic, update the existing page rather than creating a new one.
 
-## Step-by-Step: Lint Wiki
+### 3. Classify and create pages
 
-```bash
-uv run --directory karpathy-wiki-manual-and-auto python scripts/lint.py              # all checks
-uv run --directory karpathy-wiki-manual-and-auto python scripts/lint.py --structural-only # free, no LLM
-```
-
-## Wiki Page Folders
-
-Two folders only (same idea as [coleam00/claude-memory-compiler](https://github.com/coleam00/claude-memory-compiler)):
+For each piece of knowledge, choose a folder:
 
 | Folder | When to use |
 |--------|-------------|
-| `wiki/concepts/` | Atomic pages: patterns, bugs, features, system design notes, ops, glossary |
-| `wiki/connections/` | Cross-cutting pages: workflows, how multiple systems/topics relate, spanning ADRs |
+| `concepts/` | Single-topic pages: patterns, bugs, features, how things work, ops, glossary |
+| `connections/` | Pages whose main value is relating multiple topics (workflows, ADRs spanning systems) |
 
-## Wiki Page Format
+**When in doubt, use `concepts/`.**
 
-```yaml
+One `.md` file per topic. Each page **must** have YAML frontmatter:
+
+```markdown
 ---
-title: Page Title
+title: "Page Title"
 tags: [tag1, tag2]
 date: YYYY-MM-DD
 sources:
-  - raw/path/to/source.md
+  - "daily/2026-04-14.md"
 related:
   - "[[other-wiki-page]]"
 ---
+
+Concise encyclopedia-style content. 30-80 lines. Facts, not narration.
 ```
+
+**Rules:**
+- File names: `lowercase-with-hyphens.md`
+- If a page on this topic already exists — **update it**, don't duplicate
+- Wikilinks: `[[filename-without-extension]]`
+- Be concise: summarize, don't copy-paste
+
+### 4. Update index.md
+
+Add new pages to the Concepts or Connections table:
+
+```markdown
+| [[page-filename]] | One-line summary | 2026-04-14 |
+```
+
+Update the `Total pages:` count.
+
+### 5. Append to log.md
+
+```markdown
+| 2026-04-14 | manual | daily/2026-04-14.md | 2 pages created |
+```
+
+### 6. Delete processed daily files
+
+After successfully compiling, **delete** the `daily/*.md` files that were processed.
+**Never** delete files from `raw/`.
+
+---
+
+## "Remember This" / "Note This"
+
+When the user says "remember this", "note this", "запомни":
+
+1. Create or update the most relevant wiki page with the information
+2. Add `sources: [conversation]` in frontmatter
+3. Update `index.md` + `log.md`
+
+---
+
+## Lint Wiki
+
+```bash
+uv run --directory ~/WIKI/PROJECT-NAME/compiler python scripts/lint.py              # all checks
+uv run --directory ~/WIKI/PROJECT-NAME/compiler python scripts/lint.py --structural-only # free, no LLM
+```
+
+---
+
+## Query Mode
+
+When the user asks a question about the project:
+1. Read `obsidian/index.md` to find relevant pages
+2. Read the relevant wiki pages
+3. Answer with citations using `[[wikilinks]]`
+
+---
 
 ## Important
 
 - **Never modify or delete files in `raw/`** — they are immutable
-- **`daily/` files are auto-deleted after compilation** — they are ephemeral
+- **`daily/` files are deleted after compilation** — they are ephemeral
 - **Always update `index.md`** after any wiki mutation
 - **Always append to `log.md`** — it's the audit trail
-- **Wikilinks use the filename without extension:** `[[server-architecture]]` not `[[server-architecture.md]]`
+- **Wikilinks use filename without extension:** `[[server-architecture]]` not `[[server-architecture.md]]`

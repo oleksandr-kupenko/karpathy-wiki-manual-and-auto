@@ -1,276 +1,216 @@
-# Karpathy Wiki — LLM Knowledge Base
+# Karpathy Memory — Persistent Wiki for AI Coding Assistants
 
-Permanent memory for AI coding assistants (Claude Code, OpenCode). Based on [Andrej Karpathy's method](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): Markdown Wiki instead of RAG.
+Permanent memory for AI coding assistants (Claude Code, OpenCode, Cursor). Based on [Andrej Karpathy's method](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): Markdown Wiki instead of RAG.
 
-## How It Works
+## What It Does
 
-![Flow Diagram](assets/schema-karpaty-wiki.webp)
+AI assistants forget everything between sessions. This project gives them permanent memory:
 
-**Two source types:**
+1. **Session start** — wiki index injected into assistant context (it "remembers")
+2. **During session** — hooks capture conversation context
+3. **Session end** — key knowledge is summarized into daily logs
+4. **Compile** — daily logs + raw notes become structured wiki pages
 
-| Source | Nature | Lifecycle |
-|--------|--------|-----------|
-| `raw/` | Manual: devlog, articles, transcripts | Immutable — never deleted |
-| `daily/` | Auto: session summaries from hooks | Ephemeral — deleted after compilation |
+## Structure
 
-**Models:**
-- `flush.py` — DeepSeek (if API key set) **or** Claude Agent SDK (automatic fallback)
-- `compile.py` — **OpenCode** (free, recommended) **or** DeepSeek API **or** Claude Agent SDK
+Wiki lives **outside** your project repo (one wiki can serve multiple projects):
 
-## Wiki folders (`wiki/`)
-
-Compiled markdown lives under **exactly two** subfolders — same convention as [coleam00/claude-memory-compiler](https://github.com/coleam00/claude-memory-compiler):
-
-| Folder | Use it for |
-|--------|------------|
-| `wiki/concepts/` | Atomic pages: patterns, bug writeups, how a feature works, ops commands, domain facts |
-| `wiki/connections/` | Cross-cutting pages: workflows, design rationale that spans several areas, explicit links between topics |
-
-`scripts/config.py` lists these in `WIKI_SUBDIRS` (used by `compile.py`, `lint.py`, `utils.py`). The vault template ships with empty `wiki/concepts/` and `wiki/connections/` (see `templates/vault/wiki/`).
-
-## Quick Start
-
-### 1. Install into your project
-
-```bash
-# Clone as submodule (recommended) or copy
-cd /your/project
-git submodule add https://github.com/<your-username>/karpathy-wiki-manual-and-auto.git karpathy-wiki-manual-and-auto
-
-# Install Python dependencies
-cd karpathy-wiki-manual-and-auto && uv sync && cd ..
+```
+~/WIKI/
+└── my-project/
+    ├── compiler/                ← This repo (cloned here)
+    │   ├── scripts/             ← compile.py, flush.py, lint.py, query.py
+    │   └── hooks/               ← Python hooks for Claude/Cursor
+    └── obsidian/                ← The vault (knowledge base)
+        ├── index.md             ← Master catalog — READ FIRST
+        ├── log.md               ← Append-only activity log
+        ├── wiki-schema.md       ← Schema for the LLM agent
+        ├── raw/                 ← Immutable sources (never deleted)
+        ├── daily/               ← Ephemeral session logs (deleted after compile)
+        └── wiki/
+            ├── concepts/        ← Atomic knowledge: patterns, bugs, features, how-tos
+            └── connections/     ← Cross-cutting: workflows, design rationale spanning topics
 ```
 
-### 2. Create the vault
+In your **project repo**, you only need three things:
+- **Skill file** — `.claude/skills/wiki-ingest/SKILL.md` (instructions for the assistant)
+- **Hooks config** — `.claude/settings.json`, `.opencode/`, or `.cursor/hooks.json`
+- **CLAUDE.md snippet** — wiki protocol instructions
+
+---
+
+## Setup Guide (Prompt for AI Assistant)
+
+When a user asks to "set up karpathy-wiki for my project", follow these steps one by one. **Ask before acting.**
+
+### Step 1: Ask About Wiki Location
+
+Ask the user:
+
+> Where should I create the wiki? Default: `~/WIKI/<project-name>/` — a folder **outside** your project repo.
+> It will have two subdirectories: `compiler/` (scripts from this repo) and `obsidian/` (the knowledge base).
+>
+> Example: if your project is at `~/projects/my-app`, the wiki would be at `~/WIKI/my-app/`.
+
+If the user doesn't specify, use `~/WIKI/<project-name>/` where `<project-name>` matches the project's folder name.
+
+### Step 2: Clone and Install
 
 ```bash
-# Copy template vault (rename as you like)
-cp -r karpathy-wiki-manual-and-auto/templates/vault/ ./obsidian-vault
+WIKI_BASE="$HOME/WIKI/my-project"  # use the path from Step 1
+
+mkdir -p "$(dirname "$WIKI_BASE")"
+git clone https://github.com/oleksandr-kupenko/karpathy-wiki-manual-and-auto.git "$WIKI_BASE/compiler"
+cp -r "$WIKI_BASE/compiler/templates/vault" "$WIKI_BASE/obsidian"
+cd "$WIKI_BASE/compiler" && uv sync
 ```
 
-### 3. Connect hooks
+### Step 3: Ask About Compilation Mode
 
-#### Claude Code
+Ask the user:
 
-```bash
-# Copy hook config
-cp -r karpathy-wiki-manual-and-auto/templates/.claude/ .claude/
-```
+> How should wiki pages be created?
+>
+> **Option A — Manual (default, free):** You tell the assistant "create wiki from daily" or "ingest". The assistant reads source files and creates wiki pages directly — no scripts, no API costs.
+>
+> **Option B — Automatic (paid):** After 18:00, a Python script automatically compiles daily logs into wiki pages using an LLM. Requires DeepSeek API key (~$0.01/compile) or Claude Agent SDK (~$2+/compile).
 
-> If `.claude/settings.json` already exists in your project, merge the `"hooks"` key
-> from `templates/.claude/settings.json` into it manually rather than overwriting.
+If Option A: skip `.env` and `compile-config.json` setup. The assistant handles compilation manually when asked.
 
-#### OpenCode
-
-```bash
-# Copy plugin
-cp -r karpathy-wiki-manual-and-auto/templates/.opencode/ .opencode/
-cd .opencode && npm install && cd ..
-
-# Copy config (if opencode.json already exists, add "memory-compiler" to its "plugin" array)
-cp karpathy-wiki-manual-and-auto/templates/opencode.json ./
-```
-
-#### Cursor AI
-
-Requires **Cursor 1.7+** (hooks support).
-
-```bash
-# Copy hooks config into your project (create .cursor/ if it doesn't exist)
-mkdir -p .cursor
-cp karpathy-wiki-manual-and-auto/templates/cursor-hooks.json .cursor/hooks.json
-```
-
-> If `.cursor/hooks.json` already exists, merge the `"hooks"` key manually.
-
-The hooks wired:
-| Hook | When | What it does |
-|------|------|-------------|
-| `sessionStart` | Session starts | Reads `index.md` + recent daily log → injects into system context |
-| `sessionEnd` | Session ends | Extracts transcript → spawns `flush.py` → daily log |
-| `preCompact` | Before context compaction | Same as sessionEnd (saves context before it's lost) |
-
-### 4. Add wiki instructions to CLAUDE.md
-
-Append the content of `templates/CLAUDE.md.snippet` to your project's `CLAUDE.md`.
-
-> If you renamed the vault (Step 2), also update every `obsidian-vault/` path in the
-> snippet and in `.claude/skills/wiki-ingest/SKILL.md` to match your vault name.
-
-### 5. Open in Obsidian (optional)
-
-Point an Obsidian vault at your `obsidian-vault/` directory for graph view, backlinks, and search.
-
-## Configuration (optional)
-
-No API keys required — works out of the box with OpenCode (free).
-
-```bash
-cp karpathy-wiki-manual-and-auto/.env.example karpathy-wiki-manual-and-auto/.env
-cp karpathy-wiki-manual-and-auto/flush-config.json.example karpathy-wiki-manual-and-auto/flush-config.json
-```
-
-### Compile Provider
-
-`compile.py` supports three providers, configured in `compile-config.json`:
-
-| Provider | Cost | What it uses |
-|----------|------|-------------|
-| `opencode` | **$0** | Runs OpenCode with COMPILE_INSTRUCTIONS.md (recommended) |
-| `deepseek` | ~$0.01 | DeepSeek API via OpenAI SDK (requires key) |
-| `claude` | ~$2+ | Claude Agent SDK (expensive, rate limits) |
-
-**Default:** `opencode` (free)
-
-```bash
-# Create compile-config.json
-echo '{"provider": "opencode"}' > karpathy-wiki-manual-and-auto/compile-config.json
-
-# Or use DeepSeek
-echo '{"provider": "deepseek"}' > karpathy-wiki-manual-and-auto/compile-config.json
-
-# Or Claude (not recommended — expensive)
-echo '{"provider": "claude"}' > karpathy-wiki-manual-and-auto/compile-config.json
-```
-
-### Flush Provider
-
-To use DeepSeek for cheaper session summarization, add your key to `.env`:
+If Option B: create `$WIKI_BASE/compiler/.env`:
 ```
 DEEPSEEK_API_KEY=sk-your-key-here
 ```
-
-To customize vault path (default: `obsidian-vault` sibling to `karpathy-wiki-manual-and-auto/`):
-```bash
-echo "WIKI_VAULT_DIR=my-project-wiki" >> karpathy-wiki-manual-and-auto/.env
-# or absolute path:
-echo "WIKI_VAULT_PATH=/absolute/path/to/vault" >> karpathy-wiki-manual-and-auto/.env
+And `$WIKI_BASE/compiler/compile-config.json`:
+```json
+{"provider": "opencode"}
 ```
+
+### Step 4: Install Templates Into Project
+
+Ask which AI assistants the user works with, then copy the corresponding templates:
+
+```bash
+PROJECT_DIR="/path/to/your/project"
+WIKI_BASE="$HOME/WIKI/my-project"
+```
+
+**Claude Code:**
+```bash
+mkdir -p "$PROJECT_DIR/.claude/skills/wiki-ingest"
+cp "$WIKI_BASE/compiler/templates/.claude/settings.json" "$PROJECT_DIR/.claude/settings.json"
+cp "$WIKI_BASE/compiler/templates/.claude/skills/wiki-ingest/SKILL.md" "$PROJECT_DIR/.claude/skills/wiki-ingest/SKILL.md"
+```
+> If `.claude/settings.json` already exists, merge the `"hooks"` key manually.
+
+**OpenCode:**
+```bash
+cp -r "$WIKI_BASE/compiler/templates/.opencode" "$PROJECT_DIR/.opencode"
+cp "$WIKI_BASE/compiler/templates/opencode.json" "$PROJECT_DIR/opencode.json"
+cd "$PROJECT_DIR/.opencode" && npm install
+```
+
+**Cursor AI** (requires Cursor 1.7+):
+```bash
+mkdir -p "$PROJECT_DIR/.cursor"
+cp "$WIKI_BASE/compiler/templates/cursor-hooks.json" "$PROJECT_DIR/.cursor/hooks.json"
+```
+
+### Step 5: Update Paths
+
+Replace all path placeholders in the copied templates with actual paths:
+
+- `.claude/settings.json` — update `uv run --directory ...` paths in hook commands
+- `.claude/skills/wiki-ingest/SKILL.md` — update vault and compiler paths
+- `.opencode/plugins/memory-compiler.ts` — update `compilerDir` and `vaultDir`
+- `.cursor/hooks.json` — update hook command paths
+- `CLAUDE.md` snippet — update vault path
+
+### Step 6: Add CLAUDE.md Snippet
+
+Append the content of `$WIKI_BASE/compiler/templates/CLAUDE.md.snippet` to the project's `CLAUDE.md`.
+
+If you renamed the vault or moved it, update all `obsidian/` paths in the snippet.
+
+### Step 7: Verify
+
+- Start a new session in your AI assistant
+- The assistant should mention the wiki index in its first response
+- Try saying "remember this" to create a test wiki page
+
+---
 
 ## Usage
 
-### Automatic
+### In Chat
 
-Hooks fire during coding sessions:
-- **Session start** — injects wiki index into context (assistant "remembers")
-- **Session end / idle** — extracts knowledge → `daily/` (DeepSeek or Claude as fallback)
-- **Context compaction** — saves context before it's lost
-- **After 18:00** — if daily log changed, auto-runs `compile.py`
+| Command | What happens |
+|---------|-------------|
+| "ingest" / "create wiki from daily" | Assistant reads `daily/` and `raw/`, creates wiki pages manually |
+| "remember this" / "note this" | Assistant creates a wiki page from current conversation |
+| "lint the wiki" | Runs health checks on the wiki |
 
-### Manual
+### Via CLI
 
 ```bash
-# Compile all unprocessed sources into wiki pages
-uv run --directory karpathy-wiki-manual-and-auto python scripts/compile.py
+cd ~/WIKI/my-project/compiler
 
-# Compile only daily/ or raw/
-uv run --directory karpathy-wiki-manual-and-auto python scripts/compile.py --source daily
-uv run --directory karpathy-wiki-manual-and-auto python scripts/compile.py --source raw
+uv run python scripts/compile.py                # compile all unprocessed sources
+uv run python scripts/compile.py --source raw   # only raw/
+uv run python scripts/compile.py --source daily # only daily/
+uv run python scripts/compile.py --dry-run      # preview without writing
 
-# Compile a specific file
-uv run --directory karpathy-wiki-manual-and-auto python scripts/compile.py --file raw/my-article.md
+uv run python scripts/lint.py                   # health check
+uv run python scripts/lint.py --structural-only # free, no LLM
 
-# Query the knowledge base
-uv run --directory karpathy-wiki-manual-and-auto python scripts/query.py "How does auth work?"
-
-# Health check
-uv run --directory karpathy-wiki-manual-and-auto python scripts/lint.py
-uv run --directory karpathy-wiki-manual-and-auto python scripts/lint.py --structural-only  # free, no LLM
+uv run python scripts/query.py "How does auth work?"  # search the wiki
 ```
 
-### Interactive (via AI assistant)
+---
 
-Tell your assistant:
-- **"ingest"** / **"обработай"** — processes sources into wiki
-- **"remember this"** / **"note this"** — creates a wiki page from conversation
-- **"lint the wiki"** — runs health checks
+## Wiki Folders
 
-## Project Structure
+Only **two** folders (same model as [coleam00/claude-memory-compiler](https://github.com/coleam00/claude-memory-compiler)):
 
-```
-karpathy-wiki-manual-and-auto/                  # This repo — add to any project as a submodule
-├── assets/                      # Diagrams and images
-├── scripts/
-│   ├── compile.py               # Unified compiler: raw/ + daily/ → wiki/
-│   ├── flush.py                 # Session → daily log (DeepSeek or Claude)
-│   ├── query.py                 # Index-guided knowledge base Q&A
-│   ├── lint.py                  # Health checks; saves reports to reports/ (auto-created)
-│   ├── config.py                # Path constants (configurable via env vars)
-│   └── utils.py                 # Shared helpers
-├── hooks/                       # Hook scripts (Python) for all AI assistants
-│   ├── session-start.py         # Claude Code: inject wiki index into session context
-│   ├── session-end.py           # Claude Code: extract conversation → spawn flush.py
-│   ├── pre-compact.py           # Claude Code: save context before auto-compaction
-│   └── cursor/
-│       ├── session-start.py     # Cursor AI: inject wiki index (sessionStart hook)
-│       ├── session-end.py       # Cursor AI: extract conversation (sessionEnd hook)
-│       └── pre-compact.py       # Cursor AI: save context before compaction
-├── templates/                   # Copy these into your project once at setup
-│   ├── vault/                   # Obsidian vault skeleton (`wiki/concepts` + `wiki/connections`)
-│   ├── .claude/                 # settings.json (hook wiring) + wiki-ingest skill
-│   ├── .opencode/               # OpenCode memory plugin
-│   ├── opencode.json            # OpenCode config
-│   ├── cursor-hooks.json        # Cursor AI hooks config → copy to .cursor/hooks.json
-│   └── CLAUDE.md.snippet        # Append to your project's CLAUDE.md
-├── AGENTS.md                    # LLM agent schema: wiki structure, compile rules, conventions
-├── pyproject.toml               # Python dependencies (uv)
-├── .env.example                 # All supported environment variables with comments
-├── .gitignore
-└── flush-config.json.example    # Provider config reference (auto/deepseek/claude)
-```
+| Folder | When to use |
+|--------|-------------|
+| `wiki/concepts/` | Single-topic pages: patterns, bugs, features, how things work, ops commands, glossary |
+| `wiki/connections/` | Pages whose main value is linking multiple topics: workflows, design rationale, ADRs |
+
+**When in doubt, use `concepts/`.** Only use `connections/` when the page explicitly ties 2+ separate topics together.
+
+---
+
+## Hooks
+
+| Hook | When | What it does |
+|------|------|-------------|
+| `sessionStart` | Session starts | Reads `index.md` + recent daily log → injects into context |
+| `sessionEnd` | Session ends | Extracts conversation → spawns `flush.py` → daily log |
+| `preCompact` | Before context compaction | Saves context before it's lost to summarization |
+
+**`flush.py`** (background, no user interaction):
+1. Extracts key knowledge from conversation via DeepSeek or Claude
+2. Appends to `daily/YYYY-MM-DD.md`
+3. If after 18:00 and compilation is enabled (Option B): spawns `compile.py`
+
+---
+
+## Optional: Obsidian
+
+Point an Obsidian vault at your `obsidian/` directory for graph view, backlinks, and search.
+
+---
 
 ## Requirements
 
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) package manager
-- [OpenCode](https://opencode.ai) installed (for compile.py with `opencode` provider)
-
-Optional:
-- DeepSeek API key (for `deepseek` provider in flush.py or compile.py)
-- Claude Code subscription (only for `claude` provider fallback)
-- [Obsidian](https://obsidian.md) for browsing the wiki
-
-## Flush Provider Logic
-
-`flush.py` selects the LLM provider automatically:
-
-1. If `flush-config.json` sets `"flush_provider": "claude"` → uses Claude Agent SDK
-2. If `flush-config.json` sets `"flush_provider": "deepseek"` → uses DeepSeek API (requires key)
-3. If `flush-config.json` sets `"flush_provider": "auto"` (default) or is missing:
-   - If `DEEPSEEK_API_KEY` is set → uses DeepSeek API
-   - Otherwise → falls back to Claude Agent SDK (uses Claude Code subscription)
-
-## Compile Provider (OpenCode)
-
-**Recommended:** Use `opencode` provider (free, no rate limits):
-
-```bash
-echo '{"provider": "opencode"}' > compile-config.json
-```
-
-Then run compile:
-```bash
-uv run python scripts/compile.py
-```
-
-The compile will:
-1. Read `COMPILE_INSTRUCTIONS.md` from the vault
-2. Process `daily/` or `raw/` files
-3. Create wiki pages in `wiki/concepts/` or `wiki/connections/`
-4. Update `index.md` and `log.md`
-
-Make sure OpenCode is installed:
-```bash
-# Install OpenCode
-curl -s https://opencode.ai/install | sh
-# or
-npm install -g opencode
-```
-
-> Note: When using `opencode` provider, `compile.py` runs OpenCode in background with `--dangerously-skip-permissions` flag to auto-approve file operations.
+- Optional: DeepSeek API key (for automatic flush/compile)
+- Optional: Claude Code subscription (for Claude-based flush/compile)
+- Optional: [Obsidian](https://obsidian.md) for browsing the wiki
 
 ## Credits
 
 - [Andrej Karpathy](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) — original method
-- [coleam00/claude-memory-compiler](https://github.com/coleam00/claude-memory-compiler) — two-folder wiki layout (`concepts/` + `connections/`) and related ideas
-- [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-python) — agent loop for compile.py
+- [coleam00/claude-memory-compiler](https://github.com/coleam00/claude-memory-compiler) — two-folder wiki layout

@@ -15,7 +15,7 @@ PROJECT_DIR = ROOT_DIR.parent
 
 VAULT_DIR = Path(os.environ.get(
     "WIKI_VAULT_PATH",
-    str(PROJECT_DIR / os.environ.get("WIKI_VAULT_DIR", "obsidian-vault")),
+    str(PROJECT_DIR / os.environ.get("WIKI_VAULT_DIR", "obsidian")),
 ))
 
 DAILY_DIR = VAULT_DIR / "daily"
