@@ -73,7 +73,33 @@ Read `obsidian/index.md` to understand existing pages.
 
 **When updating is enough:** If a session adds minor context to an existing topic, update the existing page rather than creating a new one.
 
-### 3. Classify and create pages
+### 3. Check for existing pages BEFORE writing
+
+**This step is mandatory.** Do not skip.
+
+For each topic extracted from sources:
+
+1. **Search `index.md`** — scan titles and summaries for the same feature/bug/topic name
+2. **Scan filenames** in `wiki/concepts/` and `wiki/connections/` for name overlap
+3. **Read candidates** — if a file looks related, read it to confirm
+
+**Decision:**
+- Same or substantially overlapping topic → **update the existing page**
+- Genuinely new topic with no overlap → **create a new page**
+
+**When updating an existing page:**
+- Merge new information into relevant sections
+- Remove or replace stale facts (e.g., "bug was in X" → now fixed differently)
+- Add the new source to the `sources:` list in frontmatter
+- Update `lastmod:` to today
+- Do NOT duplicate sections; absorb new content into the existing structure
+
+**Signs a page needs updating, not a new file:**
+- Same feature name, same bug, same component, same workflow
+- New session continued work on something the wiki already covers
+- The existing page would be misleading or wrong without the update
+
+### 4. Classify and write pages
 
 For each piece of knowledge, choose a folder:
 
@@ -91,6 +117,7 @@ One `.md` file per topic. Each page **must** have YAML frontmatter:
 title: "Page Title"
 tags: [tag1, tag2]
 date: YYYY-MM-DD
+lastmod: YYYY-MM-DD
 sources:
   - "daily/2026-04-14.md"
 related:
@@ -102,27 +129,28 @@ Concise encyclopedia-style content. 30-80 lines. Facts, not narration.
 
 **Rules:**
 - File names: `lowercase-with-hyphens.md`
-- If a page on this topic already exists — **update it**, don't duplicate
 - Wikilinks: `[[filename-without-extension]]`
 - Be concise: summarize, don't copy-paste
 
-### 4. Update index.md
+### 5. Update index.md
 
-Add new pages to the Concepts or Connections table:
+For **new** pages: add a row to the Concepts or Connections table:
 
 ```markdown
 | [[page-filename]] | One-line summary | 2026-04-14 |
 ```
 
-Update the `Total pages:` count.
+For **updated** pages: update the summary and date in the existing row if they changed.
 
-### 5. Append to log.md
+Update the `Total pages:` count only when pages were added.
+
+### 6. Append to log.md
 
 ```markdown
-| 2026-04-14 | manual | daily/2026-04-14.md | 2 pages created |
+| 2026-04-14 | manual | daily/2026-04-14.md | 2 created, 1 updated |
 ```
 
-### 6. Delete processed daily files
+### 7. Delete processed daily files
 
 After successfully compiling, **delete** the `daily/*.md` files that were processed.
 **Never** delete files from `raw/`.

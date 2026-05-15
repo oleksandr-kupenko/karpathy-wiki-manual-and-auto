@@ -48,20 +48,23 @@ When a user asks to "set up karpathy-wiki for my project", follow these steps on
 Ask the user:
 
 > Where should I create the wiki? Default: `~/WIKI/<project-name>/` — a folder **outside** your project repo.
-> It will have two subdirectories: `compiler/` (scripts from this repo) and `obsidian/` (the knowledge base).
+> It will have two subdirectories: `compiler/` (scripts from this repo) and a vault folder (the knowledge base).
+>
+> What should the vault folder be named? Default: `obsidian`. **This name becomes the Obsidian vault name** — if you rename the vault in Obsidian later, it renames the actual folder. You can always update `WIKI_VAULT_DIR` in `compiler/.env` to match.
 >
 > Example: if your project is at `~/projects/my-app`, the wiki would be at `~/WIKI/my-app/`.
 
-If the user doesn't specify, use `~/WIKI/<project-name>/` where `<project-name>` matches the project's folder name.
+If the user doesn't specify, use `~/WIKI/<project-name>/` where `<project-name>` matches the project's folder name. Use `obsidian` as the vault folder name unless the user specifies otherwise.
 
 ### Step 2: Clone and Install
 
 ```bash
 WIKI_BASE="$HOME/WIKI/my-project"  # use the path from Step 1
+VAULT_NAME="obsidian"              # vault folder name from Step 1
 
 mkdir -p "$(dirname "$WIKI_BASE")"
 git clone https://github.com/oleksandr-kupenko/karpathy-wiki-manual-and-auto.git "$WIKI_BASE/compiler"
-cp -r "$WIKI_BASE/compiler/templates/vault" "$WIKI_BASE/obsidian"
+cp -r "$WIKI_BASE/compiler/templates/vault" "$WIKI_BASE/$VAULT_NAME"
 cd "$WIKI_BASE/compiler" && uv sync
 ```
 
@@ -80,6 +83,7 @@ If Option A: skip `.env` and `compile-config.json` setup. The assistant handles 
 If Option B: create `$WIKI_BASE/compiler/.env`:
 ```
 DEEPSEEK_API_KEY=sk-your-key-here
+WIKI_VAULT_DIR=obsidian  # change if vault folder name != obsidian
 ```
 And `$WIKI_BASE/compiler/compile-config.json`:
 ```json
@@ -130,7 +134,9 @@ Replace all path placeholders in the copied templates with actual paths:
 
 Append the content of `$WIKI_BASE/compiler/templates/CLAUDE.md.snippet` to the project's `CLAUDE.md`.
 
-If you renamed the vault or moved it, update all `obsidian/` paths in the snippet.
+If the vault folder is not named `obsidian`, update all `obsidian/` path references in the snippet.
+
+> **Note:** If Obsidian later renames your vault (e.g. you rename it inside Obsidian), it renames the actual folder on disk — not just an alias. Fix: update `WIKI_VAULT_DIR=<new-name>` in `compiler/.env`. No other files need changing.
 
 ### Step 7: Verify
 
