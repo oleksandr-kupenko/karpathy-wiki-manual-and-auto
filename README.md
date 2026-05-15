@@ -41,108 +41,167 @@ In your **project repo**, you only need three things:
 
 ## Setup Guide (Prompt for AI Assistant)
 
-When a user asks to "set up karpathy-wiki for my project", follow these steps one by one. **Ask before acting.**
+When a user asks to "set up karpathy-wiki for my project", run **Phase 1 first** — ask all questions and collect answers before touching any files. Only then proceed to Phase 2.
 
-### Step 1: Ask About Wiki Location
+---
 
-Ask the user:
+### Phase 1: Interview
 
-> Where should I create the wiki? Default: `~/WIKI/<project-name>/` — a folder **outside** your project repo.
-> It will have two subdirectories: `compiler/` (scripts from this repo) and a vault folder (the knowledge base).
+Ask all five questions in one message. Wait for answers. Do not assume defaults silently — if the user skips a question, ask again for that specific one before proceeding.
+
+---
+
+**Q1 — Wiki location**
+
+> Where should the wiki live? It will be a folder **outside** your project repo.
+> Default: `~/WIKI/<project-name>/`
 >
-> What should the vault folder be named? Default: `obsidian`. **This name becomes the Obsidian vault name** — if you rename the vault in Obsidian later, it renames the actual folder. You can always update `WIKI_VAULT_DIR` in `compiler/.env` to match.
+> It will contain two subdirectories: `compiler/` (scripts) and a vault folder (the knowledge base).
+
+---
+
+**Q2 — Vault folder name**
+
+> What should the vault folder be named? Default: `obsidian`
 >
-> Example: if your project is at `~/projects/my-app`, the wiki would be at `~/WIKI/my-app/`.
+> This name becomes the Obsidian vault name. **Important:** if you later rename the vault inside Obsidian, it renames the actual folder on disk — not just an alias. You can always fix this by updating `WIKI_VAULT_DIR` in `compiler/.env`.
 
-If the user doesn't specify, use `~/WIKI/<project-name>/` where `<project-name>` matches the project's folder name. Use `obsidian` as the vault folder name unless the user specifies otherwise.
+---
 
-### Step 2: Clone and Install
+**Q3 — AI assistant(s)**
+
+> Which AI assistant(s) do you use in this project? (Pick one or more)
+>
+> - **Claude Code** — hooks via `.claude/settings.json` + skill file
+> - **OpenCode** — hooks via TypeScript plugin (`.opencode/`)
+> - **Cursor AI** — hooks via `.cursor/hooks.json` (requires Cursor 1.7+)
+
+---
+
+**Q4 — Session flush method**
+
+> At the end of each session, the wiki system saves what happened. How should it extract knowledge from the conversation?
+>
+> **A — DeepSeek API** (~$0.01/session): Fast and cheap. Requires a DeepSeek API key from [platform.deepseek.com](https://platform.deepseek.com/).
+>
+> **B — Claude via Agent SDK** (free with Claude Max subscription): Uses your existing subscription. Spawns a background Haiku agent. Slightly slower than DeepSeek.
+>
+> **C — Raw transcript only** (free, no API): Saves the conversation transcript as-is, without summarizing. Knowledge is extracted later when you manually run "ingest". Good if you want full control or don't have API access.
+
+---
+
+**Q5 — Automatic wiki compilation**
+
+> After sessions are flushed to daily logs, should the system automatically compile wiki pages?
+>
+> - **Yes — auto-compile after 18:00** (requires Q4 = A or B): At end of day, `compile.py` runs automatically and generates wiki pages from that day's logs.
+> - **No — manual only** (default): You trigger wiki compilation yourself by saying "ingest" or "create wiki from daily".
+>
+> Note: if Q4 = C (raw only), auto-compile is not available.
+
+---
+
+### Phase 2: Execute
+
+Once you have all answers, run the following steps in order.
+
+#### Step 1: Clone and install
 
 ```bash
-WIKI_BASE="$HOME/WIKI/my-project"  # use the path from Step 1
-VAULT_NAME="obsidian"              # vault folder name from Step 1
+WIKI_BASE="<answer to Q1>"
+VAULT_NAME="<answer to Q2, default: obsidian>"
 
-mkdir -p "$(dirname "$WIKI_BASE")"
+mkdir -p "$WIKI_BASE"
 git clone https://github.com/oleksandr-kupenko/karpathy-wiki-manual-and-auto.git "$WIKI_BASE/compiler"
 cp -r "$WIKI_BASE/compiler/templates/vault" "$WIKI_BASE/$VAULT_NAME"
 cd "$WIKI_BASE/compiler" && uv sync
 ```
 
-### Step 3: Ask About Compilation Mode
+#### Step 2: Configure `.env`
 
-Ask the user:
+Create `$WIKI_BASE/compiler/.env`:
 
-> How should wiki pages be created?
->
-> **Option A — Manual (default, free):** You tell the assistant "create wiki from daily" or "ingest". The assistant reads source files and creates wiki pages directly — no scripts, no API costs.
->
-> **Option B — Automatic (paid):** After 18:00, a Python script automatically compiles daily logs into wiki pages using an LLM. Requires DeepSeek API key (~$0.01/compile) or Claude Agent SDK (~$2+/compile).
+```bash
+# Always set if vault name != obsidian:
+WIKI_VAULT_DIR=<VAULT_NAME>
 
-If Option A: skip `.env` and `compile-config.json` setup. The assistant handles compilation manually when asked.
-
-If Option B: create `$WIKI_BASE/compiler/.env`:
-```
+# Q4 = A (DeepSeek):
 DEEPSEEK_API_KEY=sk-your-key-here
-WIKI_VAULT_DIR=obsidian  # change if vault folder name != obsidian
-```
-And `$WIKI_BASE/compiler/compile-config.json`:
-```json
-{"provider": "opencode"}
+
+# Q4 = B (Claude Agent SDK): no extra key needed — uses Claude Code subscription
+# Q4 = C (raw only): no keys needed
 ```
 
-### Step 4: Install Templates Into Project
+#### Step 3: Configure flush provider
 
-Ask which AI assistants the user works with, then copy the corresponding templates:
+Create `$WIKI_BASE/compiler/flush-config.json` based on Q4:
+
+| Q4 answer | flush-config.json |
+|-----------|-------------------|
+| A — DeepSeek | `{"provider": "deepseek"}` |
+| B — Claude Agent SDK | `{"provider": "claude"}` |
+| C — Raw only | `{"provider": "none"}` |
+
+#### Step 4: Configure auto-compile
+
+Create `$WIKI_BASE/compiler/compile-config.json` based on Q5:
+
+| Q5 answer | compile-config.json |
+|-----------|---------------------|
+| Yes — auto after 18:00 | `{"provider": "opencode", "auto_compile": true}` |
+| No — manual only | `{"auto_compile": false}` |
+
+#### Step 5: Install assistant templates
+
+Use paths from Q1 and Q3. Replace `$PROJECT_DIR` with the actual project path.
 
 ```bash
 PROJECT_DIR="/path/to/your/project"
-WIKI_BASE="$HOME/WIKI/my-project"
+WIKI_BASE="<Q1 answer>"
 ```
 
-**Claude Code:**
+**Claude Code** (if selected in Q3):
 ```bash
 mkdir -p "$PROJECT_DIR/.claude/skills/wiki-ingest"
 cp "$WIKI_BASE/compiler/templates/.claude/settings.json" "$PROJECT_DIR/.claude/settings.json"
 cp "$WIKI_BASE/compiler/templates/.claude/skills/wiki-ingest/SKILL.md" "$PROJECT_DIR/.claude/skills/wiki-ingest/SKILL.md"
 ```
-> If `.claude/settings.json` already exists, merge the `"hooks"` key manually.
+> If `.claude/settings.json` already exists — merge the `"hooks"` key manually, do not overwrite.
 
-**OpenCode:**
+**OpenCode** (if selected in Q3):
 ```bash
 cp -r "$WIKI_BASE/compiler/templates/.opencode" "$PROJECT_DIR/.opencode"
 cp "$WIKI_BASE/compiler/templates/opencode.json" "$PROJECT_DIR/opencode.json"
 cd "$PROJECT_DIR/.opencode" && npm install
 ```
 
-**Cursor AI** (requires Cursor 1.7+):
+**Cursor AI** (if selected in Q3):
 ```bash
 mkdir -p "$PROJECT_DIR/.cursor"
 cp "$WIKI_BASE/compiler/templates/cursor-hooks.json" "$PROJECT_DIR/.cursor/hooks.json"
 ```
 
-### Step 5: Update Paths
+#### Step 6: Update paths in templates
 
-Replace all path placeholders in the copied templates with actual paths:
+Replace all path placeholders in the copied files with actual absolute paths:
 
-- `.claude/settings.json` — update `uv run --directory ...` paths in hook commands
-- `.claude/skills/wiki-ingest/SKILL.md` — update vault and compiler paths
-- `.opencode/plugins/memory-compiler.ts` — update `compilerDir` and `vaultDir`
-- `.cursor/hooks.json` — update hook command paths
-- `CLAUDE.md` snippet — update vault path
+- `.claude/settings.json` — `uv run --directory ...` in hook commands → `$WIKI_BASE/compiler`
+- `.claude/skills/wiki-ingest/SKILL.md` — vault path → `$WIKI_BASE/$VAULT_NAME`, compiler path → `$WIKI_BASE/compiler`
+- `.opencode/plugins/memory-compiler.ts` — `compilerDir` and `vaultDir`
+- `.cursor/hooks.json` — hook command paths
+- `CLAUDE.md` snippet — vault path
 
-### Step 6: Add CLAUDE.md Snippet
+#### Step 7: Add CLAUDE.md snippet
 
-Append the content of `$WIKI_BASE/compiler/templates/CLAUDE.md.snippet` to the project's `CLAUDE.md`.
+Append `$WIKI_BASE/compiler/templates/CLAUDE.md.snippet` to the project's `CLAUDE.md`. Update the vault path inside it.
 
-If the vault folder is not named `obsidian`, update all `obsidian/` path references in the snippet.
+> **Vault rename note:** If Obsidian renames your vault folder later, only one file needs updating: set `WIKI_VAULT_DIR=<new-name>` in `compiler/.env`.
 
-> **Note:** If Obsidian later renames your vault (e.g. you rename it inside Obsidian), it renames the actual folder on disk — not just an alias. Fix: update `WIKI_VAULT_DIR=<new-name>` in `compiler/.env`. No other files need changing.
-
-### Step 7: Verify
+#### Step 8: Verify
 
 - Start a new session in your AI assistant
-- The assistant should mention the wiki index in its first response
-- Try saying "remember this" to create a test wiki page
+- The assistant should inject the wiki index in its first response
+- Say "remember this" — the assistant should create a test wiki page
 
 ---
 
