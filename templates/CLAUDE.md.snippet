@@ -3,29 +3,7 @@
 ## Wiki (Persistent Memory)
 
 **Vault:** `~/WIKI/PROJECT-NAME/obsidian/`
-**Compiler:** `~/WIKI/PROJECT-NAME/compiler/scripts/compile.py`
 
-### Quick Reference
-- **Start of session:** read `obsidian/index.md` — the master catalog of all wiki pages
-- **Manual ingest:** tell the assistant "ingest" or "create wiki from daily" — it compiles pages directly
-- **"remember this" / "note this":** create or update the relevant wiki page immediately
-- **"lint the wiki":** `uv run --directory ~/WIKI/PROJECT-NAME/compiler python scripts/lint.py`
-
-### Source Types
-| Source | Nature | Lifecycle |
-|--------|--------|-----------|
-| `raw/` | Manual (devlog, articles, transcripts) | Immutable — never modified or deleted |
-| `daily/` | Auto-generated (session summaries from hooks) | Ephemeral — deleted after compilation |
-
-### Structure
-```
-obsidian/
-├── index.md           ← READ FIRST. Master catalog.
-├── log.md             ← Append-only activity log.
-├── wiki-schema.md     ← Schema for the LLM agent.
-├── daily/             ← Ephemeral session logs (deleted after compile).
-├── raw/               ← Immutable source documents.
-└── wiki/
-    ├── concepts/      ← Atomic knowledge (patterns, bugs, features, ops).
-    └── connections/   ← Cross-cutting links between topics.
-```
+- Session start: hook injects `obsidian/index.md` into context automatically
+- "ingest" / "create wiki from daily" / "remember this" → invoke `wiki-ingest` skill
+- "lint the wiki" → `uv run --directory ~/WIKI/PROJECT-NAME/compiler python scripts/lint.py`
