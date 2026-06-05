@@ -148,9 +148,9 @@ Read the source above and compile it into wiki pages.
 6. Append to `log.md`.
 
 ### File paths:
-- Write wiki pages to subfolders of: {WIKI_DIR}
-- Update index at: {INDEX_FILE}
-- Append log at: {LOG_FILE}
+- Write wiki pages to subfolders of: wiki/
+- Update index at: index.md
+- Append log at: log.md
 
 Run the wiki ingest now. Respond with DONE when complete."""
 
@@ -247,7 +247,7 @@ related:
 Page content here.
 ```
 
-Write to {WIKI_DIR} subfolders. Update {INDEX_FILE} and {LOG_FILE}."""
+Write to wiki/ subfolders. Update index.md and log.md."""
 
     load_env()
     api_key = os.environ.get("DEEPSEEK_API_KEY", "")
