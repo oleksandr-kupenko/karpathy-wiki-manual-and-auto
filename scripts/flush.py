@@ -66,7 +66,7 @@ def resolve_provider() -> str:
     if FLUSH_CONFIG_FILE.exists():
         try:
             cfg = json.loads(FLUSH_CONFIG_FILE.read_text(encoding="utf-8"))
-            cfg_provider = cfg.get("flush_provider", "auto")
+            cfg_provider = cfg.get("flush_provider") or cfg.get("provider") or "auto"
         except (json.JSONDecodeError, OSError):
             pass
 

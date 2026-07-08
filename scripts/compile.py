@@ -9,7 +9,7 @@ Usage:
     uv run python compile.py --source raw       # only raw/ sources
     uv run python compile.py --dry-run          # show what would be compiled
     uv run python compile.py --cleanup          # delete processed daily/ files
-    uv run python compile.py --provider <name>   # override provider (opencode/deepseek)
+    uv run python compile.py --provider <name>   # override provider (opencode only)
 """
 
 from __future__ import annotations
@@ -200,97 +200,10 @@ Now execute."""
     return cost
 
 
-async def compile_source_deepseek(source_path: Path, state: dict) -> float:
-    """Compile using DeepSeek API."""
-    from openai import OpenAI
-
-    source_hash = file_hash(source_path)
-    source_content = source_path.read_text(encoding="utf-8")
-    schema = WIKI_SCHEMA_FILE.read_text(encoding="utf-8")
-    wiki_index = read_wiki_index()
-
-    src_type = source_type_label(source_path)
-    if src_type == "daily":
-        src_rel = f"daily/{source_path.name}"
-    else:
-        src_rel = f"raw/{source_path.relative_to(RAW_DIR)}"
-
-    prompt = f"""You are a knowledge compiler. Create wiki pages from the source below.
-
-## Wiki Schema
-{schema}
-
-## Wiki Folder Guide
-{WIKI_FOLDER_DESCRIPTIONS}
-
-## Current Wiki Index
-{wiki_index}
-
-## Source to Compile
-**File:** {src_rel}
-**Type:** {src_type}
-
-{source_content[:12000]}
-
-## Task
-Create wiki pages. Output format per page:
-```
----
-title: Page Title
-tags: [tag1, tag2]
-date: YYYY-MM-DD
-sources:
-  - {src_rel}
-related:
-  - [[other-page]]
----
-Page content here.
-```
-
-Write to wiki/ subfolders. Update index.md and log.md."""
-
-    load_env()
-    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
-    if not api_key:
-        print("  Error: DEEPSEEK_API_KEY not set")
-        return 0.0
-
-    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
-
-    try:
-        resp = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
-            max_tokens=8000,
-        )
-        content = resp.choices[0].message.content or ""
-    except Exception as e:
-        print(f"  Error: {e}")
-        return 0.0
-
-    cost = 0.0
-
-    rel_path = source_path.name if src_type == "daily" else str(source_path.relative_to(RAW_DIR))
-    state_key = f"{src_type}/{rel_path}"
-    state.setdefault("ingested", {})[state_key] = {
-        "hash": source_hash,
-        "type": src_type,
-        "compiled_at": now_iso(),
-        "cost_usd": cost,
-    }
-    state["total_cost"] = state.get("total_cost", 0.0) + cost
-    save_state(state)
-
-    return cost
-
-
 async def compile_source(source_path: Path, state: dict, provider: str) -> float:
     """Compile a single source using the specified provider."""
     if provider == "opencode":
         return await compile_source_opencode(source_path, state)
-    elif provider == "deepseek":
-        return await compile_source_deepseek(source_path, state)
     else:
         print(f"  Unknown provider: {provider}")
         return 0.0
@@ -326,7 +239,7 @@ def main():
     parser.add_argument("--cleanup", action="store_true", help="Delete processed daily/ files and exit")
     parser.add_argument(
         "--provider",
-        choices=["opencode", "deepseek"],
+        choices=["opencode"],
         help="Override provider (default: from compile-config.json)",
     )
     args = parser.parse_args()
@@ -381,24 +294,10 @@ def main():
     if args.dry_run:
         return
 
-    if provider == "opencode":
-        print("\n=== AUTO RUN via opencode ===")
-        print(f"Running compile via opencode...")
-        total_cost = 0.0
-        for i, src_path in enumerate(to_compile, 1):
-            print(f"\n[{i}/{len(to_compile)}] Compiling {src_path.name}...")
-            cost = asyncio.run(compile_source(src_path, state, provider))
-            total_cost += cost
-            print(f"  Done.")
-        pages = list_wiki_pages()
-        print(f"\nCompilation complete.")
-        print(f"Wiki: {len(pages)} pages")
-        cleanup_processed_daily(state)
-        return
-
+    print(f"\nRunning compile (provider: {provider})...")
     total_cost = 0.0
     for i, src_path in enumerate(to_compile, 1):
-        print(f"\n[{i}/{len(to_compile)}] Compiling {src_path.name} (provider: {provider})...")
+        print(f"\n[{i}/{len(to_compile)}] Compiling {src_path.name}...")
         cost = asyncio.run(compile_source(src_path, state, provider))
         total_cost += cost
         print(f"  Done.")

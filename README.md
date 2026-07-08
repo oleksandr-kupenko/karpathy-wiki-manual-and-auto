@@ -271,8 +271,8 @@ Point an Obsidian vault at your `obsidian/` directory for graph view, backlinks,
 
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) package manager
-- Optional: DeepSeek API key (for automatic flush/compile)
-- Optional: Claude Code subscription (for Claude-based flush/compile)
+- Optional: DeepSeek API key (for automatic flush)
+- Optional: Claude Code subscription (for Claude-based flush)
 - Optional: [Obsidian](https://obsidian.md) for browsing the wiki
 
 ## Credits
