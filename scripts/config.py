@@ -1,15 +1,24 @@
 """Path constants and configuration for the unified knowledge base.
 
-Set WIKI_VAULT_DIR env var to override the vault directory name.
-Default: looks for a sibling directory named '*-obsidian' or falls back
-to the WIKI_VAULT_DIR name set at install time.
+Vault location is resolved, first match wins:
+  1. WIKI_VAULT_PATH  — absolute path to the vault directory
+  2. WIKI_VAULT_DIR   — vault directory name (relative to the compiler parent)
+  3. "obsidian"       — default
+
+Values are read from the environment and from the compiler's .env file, which is
+loaded on import so overrides take effect for every entry point (hooks and
+scripts). Existing environment variables always win (override=False).
 """
 
 import os
 from pathlib import Path
 from datetime import datetime, timezone
 
+from dotenv import load_dotenv
+
 ROOT_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(ROOT_DIR / ".env")
 
 PROJECT_DIR = ROOT_DIR.parent
 
